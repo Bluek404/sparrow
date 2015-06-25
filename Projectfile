@@ -1,2 +1,3 @@
 deps do
+  github "will/crystal-pg"
 end

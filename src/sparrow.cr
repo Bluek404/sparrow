@@ -1,5 +1,6 @@
 require "http/server"
 require "./sparrow/*"
+require "pg"
 
 module Sparrow
   def self.run(port = 8080)
@@ -8,12 +9,13 @@ module Sparrow
       pp request.uri.path
       case request.uri.path
       when "/"
-        HTTP::Response.ok "text/plain", "Hello world!"
+        HTTP::Response.ok("text/plain", "Hello world!")
       else
         static_server.call(request)
       end
     end
 
+    pp Sparrow::DB.version
     puts "Listening on http://0.0.0.0:#{ port }"
     server.listen
   end
