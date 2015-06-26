@@ -9,7 +9,7 @@ module Sparrow
       pp request.uri.path
       case request.uri.path
       when "/"
-        HTTP::Response.ok("text/plain", "Hello world!")
+        HTTP::Response.ok("text/html", View::Home.new().to_s)
       else
         static_server.call(request)
       end
