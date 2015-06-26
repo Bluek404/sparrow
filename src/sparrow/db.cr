@@ -34,22 +34,25 @@ module Sparrow
 
   DB.exec %{
     CREATE TABLE IF NOT EXISTS report (
-      author VARCHAR(16),
-      target VARCHAR(16),
-      reason VARCHAR(512),
-      time   BIGINT
+      author   VARCHAR(16),
+      target   VARCHAR(16),
+      category VARCHAR(16),
+      reason   VARCHAR(512),
+      time     BIGINT
     )
   }
-  DB.exec %{COMMENT ON TABLE  report        IS '举报列表'}
-  DB.exec %{COMMENT ON COLUMN report.author IS '举报者'}
-  DB.exec %{COMMENT ON COLUMN report.target IS '举报帖子ID'}
-  DB.exec %{COMMENT ON COLUMN report.reason IS '举报原因'}
-  DB.exec %{COMMENT ON COLUMN report.time   IS '举报时间'}
+  DB.exec %{COMMENT ON TABLE  report          IS '举报列表'}
+  DB.exec %{COMMENT ON COLUMN report.author   IS '举报者'}
+  DB.exec %{COMMENT ON COLUMN report.target   IS '帖子ID'}
+  DB.exec %{COMMENT ON COLUMN report.category IS '帖子所属分类'}
+  DB.exec %{COMMENT ON COLUMN report.reason   IS '举报原因'}
+  DB.exec %{COMMENT ON COLUMN report.time     IS '举报时间'}
 
   DB.exec %{
     CREATE TABLE IF NOT EXISTS log (
       handler   VARCHAR(16),
       target    VARCHAR(16),
+      category  VARCHAR(16),
       operation VARCHAR(16),
       reason    VARCHAR(512),
       time      BIGINT
@@ -57,7 +60,8 @@ module Sparrow
   }
   DB.exec %{COMMENT ON TABLE  log           IS '管理记录'}
   DB.exec %{COMMENT ON COLUMN log.handler   IS '处理者'}
-  DB.exec %{COMMENT ON COLUMN log.target    IS '处理帖子ID'}
+  DB.exec %{COMMENT ON COLUMN log.target    IS '帖子ID'}
+  DB.exec %{COMMENT ON COLUMN log.category  IS '帖子所属分类'}
   DB.exec %{COMMENT ON COLUMN log.operation IS '处理方法'}
   DB.exec %{COMMENT ON COLUMN log.reason    IS '处理原因'}
   DB.exec %{COMMENT ON COLUMN log.time      IS '处理时间'}

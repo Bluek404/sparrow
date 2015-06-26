@@ -9,13 +9,12 @@ module Sparrow
       pp request.uri.path
       case request.uri.path
       when "/"
-        HTTP::Response.ok("text/html", View::Home.new().to_s)
+        HTTP::Response.ok("text/html", View::Home.new.to_s)
       else
         static_server.call(request)
       end
     end
 
-    pp Sparrow::DB.version
     puts "Listening on http://0.0.0.0:#{ port }"
     server.listen
   end
