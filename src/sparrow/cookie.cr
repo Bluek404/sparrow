@@ -25,9 +25,14 @@ class HTTP::Request
 end
 
 class HTTP::Response
-  def set_cookie(key : String, value : String, expires = "", domain = "", path = "", secure = false, httponly = false)
+  def set_cookie(key : String, value : String, expires = nil, domain = nil, path = nil, secure = false, httponly = false)
     # TODO: 转码
-    cookie = "#{ key }=#{ value };"
+    cookie = "#{ key }=#{ value }"
+    cookie += ";expires=#{ expires }" if expires
+    cookie += ";domain=#{ domain }" if domain
+    cookie += ";path=#{ path }" if path
+    cookie += ";secure" if secure
+    cookie += ";httponly" if httponly
     @headers.add("Set-cookie", cookie)
   end
 end
