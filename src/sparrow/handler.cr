@@ -5,14 +5,13 @@ module Sparrow::Handler
     "test"
   end
   private def check_cookie(request, response)
-    pp request.headers
-    if request.cookie.has_key?("key")
-      # ...
+    if request.cookie.has_key?("id") && request.cookie.has_key?("key")
+      pp request.cookie
     else
       id = new_id()
       response.cookie["id"] = id
+      response.cookie["key"] = "key"
     end
-    pp response.headers
   end
 
   def home(request)

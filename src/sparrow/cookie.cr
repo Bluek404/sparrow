@@ -11,7 +11,13 @@ class HTTP::Request
 
   private def parse_cookie()
     if @headers.has_key?("Cookie")
-      # TODO: ...
+      pp @headers
+      @headers["Cookie"].split(';').each do |value|
+        kv = value.split('=')
+        next if kv.length != 2
+        @cookie[kv[0]] = kv[1]
+      end
+      pp @cookie
     end
   end
 
@@ -28,11 +34,7 @@ class HTTP::Cookie < Hash(String, String)
   def []=(key : String, value : String)
     # TODO: 转码
     cookie = "#{ key }=#{ value };"
-    if @response.headers.has_key?("Set-cookie")
-      @response.headers["Set-cookie"] += cookie
-    else
-      @response.headers["Set-cookie"] = cookie
-    end
+    @response.headers.add("Set-cookie", cookie)
     super
   end
 end
