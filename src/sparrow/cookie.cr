@@ -11,13 +11,11 @@ class HTTP::Request
 
   private def parse_cookie()
     if @headers.has_key?("Cookie")
-      pp @headers
       @headers["Cookie"].split(';').each do |value|
         kv = value.split('=')
         next if kv.length != 2
         @cookie[kv[0]] = kv[1]
       end
-      pp @cookie
     end
   end
 
