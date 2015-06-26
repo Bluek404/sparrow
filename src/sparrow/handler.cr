@@ -9,8 +9,8 @@ module Sparrow::Handler
       pp request.cookie
     else
       id = new_id()
-      response.cookie["id"] = id
-      response.cookie["key"] = "key"
+      response.set_cookie("id", id)
+      response.set_cookie("key", "key")
     end
   end
 

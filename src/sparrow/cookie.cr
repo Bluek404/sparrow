@@ -24,38 +24,11 @@ class HTTP::Request
   end
 end
 
-class HTTP::Cookie < Hash(String, String)
-  def initialize(@response)
-    super()
-  end
-
-  def []=(key : String, value : String)
+class HTTP::Response
+  def set_cookie(key : String, value : String, expires = "", domain = "", path = "", secure = false, httponly = false)
     # TODO: 转码
     cookie = "#{ key }=#{ value };"
-    @response.headers.add("Set-cookie", cookie)
-    super
-  end
-end
-
-class HTTP::Response
-  # 因为下面的init方法是覆盖的，所以无法在所有初始化方法里初始@cookie，只能预先初始占位
-  @cookie = Hash(String, String).new
-
-  def initialize(@status_code, @body = nil, @headers = Headers.new : Headers, status_message = nil, @version = "HTTP/1.1")
-    @status_message = status_message || self.class.default_status_message_for(@status_code)
-
-    if (body = @body)
-      @headers["Content-length"] = body.bytesize.to_s
-    end
-
-    init_cookie() # 真正初始化@cookie
-  end
-
-  private def init_cookie()
-    @cookie = Cookie.new(self)
-  end
-  def cookie
-    @cookie
+    @headers.add("Set-cookie", cookie)
   end
 end
 
