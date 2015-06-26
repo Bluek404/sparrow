@@ -38,6 +38,7 @@ module Sparrow
       target   VARCHAR(16),
       category VARCHAR(16),
       reason   VARCHAR(512),
+      close    BOOLEAN,
       time     BIGINT
     )
   }
@@ -46,6 +47,7 @@ module Sparrow
   DB.exec %{COMMENT ON COLUMN report.target   IS '帖子ID'}
   DB.exec %{COMMENT ON COLUMN report.category IS '帖子所属分类'}
   DB.exec %{COMMENT ON COLUMN report.reason   IS '举报原因'}
+  DB.exec %{COMMENT ON COLUMN report.close    IS '是否已处理'}
   DB.exec %{COMMENT ON COLUMN report.time     IS '举报时间'}
 
   DB.exec %{
