@@ -17,7 +17,18 @@ module Sparrow::Handler
   end
   private def check_cookie(request, response)
     if request.cookie.has_key?("id") && request.cookie.has_key?("key")
-      pp request.cookie
+      id = request.cookie["id"]
+      key = request.cookie["key"]
+      result = DB.exec({String}, "SELECT key FROM users WHERE id = $1::text", [id as String])
+      if result.rows.length != 0
+        if result.rows[0][0] == key
+          return
+        end
+      end
+
+      # 身份验证失败，当作新用户
+      request.cookie.delete("key")
+      check_cookie(request, response)
     else
       id_key = new_user()
       response.set_cookie("id", id_key[0], nil, nil, nil,nil, true)
