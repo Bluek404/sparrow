@@ -17,9 +17,9 @@ module Sparrow::Handler
   end
   private def check_cookie(request, response)
     if request.cookie.has_key?("id") && request.cookie.has_key?("key")
-      id = request.cookie["id"]
-      key = request.cookie["key"]
-      result = DB.exec({String}, "SELECT key FROM users WHERE id = $1::text", [id as String])
+      id = request.cookie["id"] as String
+      key = request.cookie["key"] as String
+      result = DB.exec({String}, "SELECT key FROM users WHERE id = $1::text", [id])
       if result.rows.length != 0
         if result.rows[0][0] == key
           return
