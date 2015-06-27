@@ -20,8 +20,6 @@ module Sparrow::Handler
       pp request.cookie
     else
       id_key = new_user()
-      pp request.cookie.has_key?("id")
-      pp request.cookie.has_key?("key")
       response.set_cookie("id", id_key[0], nil, nil, nil,nil, true)
       response.set_cookie("key", id_key[1], nil, nil, nil,nil, true)
     end
