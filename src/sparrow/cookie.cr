@@ -25,14 +25,18 @@ class HTTP::Request
 end
 
 class HTTP::Response
+  CookieTime = TimeFormat.new("%a, %d %b %Y %H:%M:%S GMT")
+  private def format_cookie_time(time)
+    CookieTime.format(time)
+  end
   def set_cookie(key, value, expires = nil, domain = nil, path = nil, secure = false, httponly = false)
     # TODO: 转码
     cookie =  "#{ key }=#{ value }"
-    cookie += ";expires=#{ expires }" if expires
-    cookie += ";domain=#{ domain }"   if domain
-    cookie += ";path=#{ path }"       if path
-    cookie += ";secure"               if secure
-    cookie += ";httponly"             if httponly
+    cookie += ";expires=#{ format_cookie_time(expires) }" if expires
+    cookie += ";domain=#{ domain }"                       if domain
+    cookie += ";path=#{ path }"                           if path
+    cookie += ";secure"                                   if secure
+    cookie += ";httponly"                                 if httponly
     @headers.add("Set-cookie", cookie)
   end
 end

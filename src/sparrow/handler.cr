@@ -31,8 +31,10 @@ module Sparrow::Handler
       check_cookie(request, response)
     else
       id_key = new_user()
-      response.set_cookie("id", id_key[0], nil, nil, nil,nil, true)
-      response.set_cookie("key", id_key[1], nil, nil, nil,nil, true)
+      # 十年后
+      time = Time.now + TimeSpan.new(3650, 0, 0, 0)
+      response.set_cookie("id", id_key[0], time, nil, nil,nil, true)
+      response.set_cookie("key", id_key[1], time, nil, nil,nil, true)
     end
   end
 
