@@ -20,4 +20,9 @@ module Sparrow
   end
 end
 
+if ARGV.length >= 1
+  if ARGV[0] == "init"
+    Sparrow.init_db()
+  end
+end
 Sparrow.run()

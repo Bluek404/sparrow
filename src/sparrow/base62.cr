@@ -22,12 +22,12 @@ module Base62
 
   # Decodes base62 string to a base10 (decimal) number.
   def self.decode(str)
-    num = 0
+    num = Int64.cast(0)
     i = 0
     len = str.length - 1
     # while loop is faster than each_char or other 'idiomatic' way
     while i < str.length
-      pow = Base ** (len - i)
+      pow = (Base ** (len - i)).to_i
       num += KeysHash[str[i]] * pow
       i += 1
     end
