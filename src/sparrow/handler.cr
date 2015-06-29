@@ -10,9 +10,9 @@ module Sparrow::Handler
     result = DB.exec({String}, "SELECT id FROM last_id WHERE name = 'user'")
     last_id = result.rows[0][0]
     id = Base62.encode(Base62.decode(last_id) + 1)
-    DB.exec("UPDATE last_id SET id = '#{ id }' WHERE name = 'user'")
+    DB.exec("UPDATE last_id SET id = $1::text WHERE name = 'user'", [id])
     key = gen_random_key()
-    DB.exec %{INSERT INTO users VALUES ('#{ id }', '#{ key }')}
+    DB.exec("INSERT INTO users VALUES ($1::text, $2::text)", [id, key])
     {id, key}
   end
   private def check_cookie(request, response)
