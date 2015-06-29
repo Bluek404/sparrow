@@ -12,7 +12,8 @@ module Sparrow
         content   VARCHAR(512),
         parent    VARCHAR(16),
         time      BIGINT,
-        modified  BIGINT
+        modified  BIGINT,
+        sage      BOOLEAN
       )
     }
     DB.exec %{COMMENT ON TABLE  threads           IS '帖子列表'}
@@ -23,16 +24,19 @@ module Sparrow
     DB.exec %{COMMENT ON COLUMN threads.parent    IS '分类or串ID'}
     DB.exec %{COMMENT ON COLUMN threads.time      IS '创建时间'}
     DB.exec %{COMMENT ON COLUMN threads.modified  IS '最后修改时间'}
+    DB.exec %{COMMENT ON COLUMN threads.sage      IS '是否下沉'}
 
     DB.exec %{
       CREATE TABLE IF NOT EXISTS category (
         name  VARCHAR(16),
-        admin VARCHAR(256)
+        admin VARCHAR(256),
+        rule  VARCHAR(1024)
       )
     }
     DB.exec %{COMMENT ON TABLE  category       IS '分类列表'}
     DB.exec %{COMMENT ON COLUMN category.name  IS '分类名称'}
     DB.exec %{COMMENT ON COLUMN category.admin IS '版主，空格分割'}
+    DB.exec %{COMMENT ON COLUMN category.rule  IS '版规'}
 
     DB.exec %{
       CREATE TABLE IF NOT EXISTS report (
