@@ -1,32 +1,17 @@
 # sparrow
 
-TODO: Write a description here for library
+匿名版
 
-## Installation
+## 运行时依赖
 
-Add it to `Projectfile`
-
-```crystal
-deps do
-  github "[your-github-name]/sparrow"
-end
-```
-
-## Usage
-
-```crystal
-require "sparrow"
-```
-
-TODO: Write usage here for library
-
-## Development
-
-TODO: Write instructions for development
+- libpq >= 9.4.0
+- libssl
+- libevent
+- libunwind
 
 ## Contributing
 
-1. Fork it ( https://github.com/[your-github-name]/sparrow/fork )
+1. Fork it ( https://github.com/Bluek404/sparrow/fork )
 2. Create your feature branch (git checkout -b my-new-feature)
 3. Commit your changes (git commit -am 'Add some feature')
 4. Push to the branch (git push origin my-new-feature)
@@ -34,4 +19,4 @@ TODO: Write instructions for development
 
 ## Contributors
 
-- [your-github-name](https://github.com/[your-github-name]) Bluek404 - creator, maintainer
+- [Bluek404](https://github.com/Bluek404) Bluek404 - creator, maintainer
