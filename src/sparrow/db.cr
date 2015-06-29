@@ -1,7 +1,14 @@
 require "pg"
 
 module Sparrow
-  DB = PG.connect("postgres://postgres:password@127.0.0.1:5433/sparrow")
+  begin
+    @@uri = ENV["SP_URI"]
+  rescue
+    puts "请设置环境变量 SP_URI 为 PostgreSQL 数据库 URI"
+    exit(2)
+  end
+
+  DB = PG.connect(@@uri)
 
   def self.init_db()
     DB.exec %{
