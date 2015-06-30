@@ -8,16 +8,19 @@
     <% (0...@threads.length).each do |i| %>
     <% thread = @threads[i] %>
     <% reply = @replies[i] %>
-    <% puts "#{ thread }, #{ reply }" %>
+    <% id, author, content, time = thread[0], thread[1], thread[2], thread[3] %>
     <div style="border-style: solid; border-width: thick;">
       <p>
-        <a href="/t/<%= thread[0] %>">作者: <%= thread[1] %> 时间: <%= thread[3] %> <%= thread[2] %></a>
+        <a href="/t/<%= id %>">作者: <%= author %> 时间: <%= time %> <%= content %></a>
       </p>
-      <p>回复:</p>
-      <% reply.each do |r| %>
-        <p>
-          <a href="#<%= r[0] %>">作者: <%= r[1] %> 时间: <%= r[3] %> <%= r[2] %></a>
-        </p>
+      <% if reply.length > 0 %>
+        <p>回复:</p>
+        <% reply.each do |r| %>
+        <% id, author, content, time = r[0], r[1], r[2], r[3] %>
+          <p>
+            <a href="#<%= id %>">作者: <%= author %> 时间: <%= time %> <%= content %></a>
+          </p>
+        <% end %>
       <% end %>
     </div>
     <% end %>
