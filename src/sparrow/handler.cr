@@ -50,6 +50,11 @@ module Sparrow::Handler
     HTTP::Response.ok("text/html", View::Category.new(category).to_s)
   end
   def new_topic(request, category)
+    category = DB.exec("SELECT name FROM categories WHERE id = $1::text",
+                       [category]).rows
+    if category.length == 0
+      return HTTP::Response.not_found
+    end
     cookie = get_cookie(request)
     if cookie && check_cookie(cookie)
       HTTP::Response.ok("text/html", "id = #{ cookie[0] }, key = #{ cookie[1] }")

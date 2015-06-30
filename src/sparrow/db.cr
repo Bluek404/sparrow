@@ -102,11 +102,11 @@ module Sparrow
     DB.exec %{COMMENT ON TABLE  last_id      IS '记录最后一个ID'}
     DB.exec %{COMMENT ON COLUMN last_id.name IS '名称'}
     DB.exec %{COMMENT ON COLUMN last_id.id   IS 'ID'}
-    result = DB.exec({String}, "SELECT id FROM last_id WHERE name='user'")
+    result = DB.exec({String}, "SELECT id FROM last_id WHERE name='user' LIMIT 1")
     if result.rows.length == 0
       DB.exec %{INSERT INTO last_id VALUES ('user', '0')}
     end
-    result = DB.exec({String}, "SELECT id FROM last_id WHERE name='threads'")
+    result = DB.exec({String}, "SELECT id FROM last_id WHERE name='threads' LIMIT 1")
     if result.rows.length == 0
       DB.exec %{INSERT INTO last_id VALUES ('threads', '0')}
     end
