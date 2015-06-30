@@ -36,10 +36,8 @@ module Sparrow::Handler
   end
 
   def home(request)
-    rows = DB.exec({String} ,"SELECT name FROM categories").rows
-    categories = rows.each.inject(Array(String).new) do |array, v|
-      array << v[0]
-    end
+    categories = DB.exec({String, String} ,"SELECT id, name FROM categories").rows
+    pp categories
     HTTP::Response.ok("text/html", View::Home.new(categories).to_s)
   end
   def new_topic(request, category)

@@ -35,12 +35,14 @@ module Sparrow
 
     DB.exec %{
       CREATE TABLE IF NOT EXISTS categories (
-        name  VARCHAR(16),
+        id    VARCHAR(16),
+        name  VARCHAR(32),
         admin VARCHAR(256),
         rule  VARCHAR(1024)
       )
     }
     DB.exec %{COMMENT ON TABLE  categories       IS '分类列表'}
+    DB.exec %{COMMENT ON COLUMN categories.id    IS '分类ID'}
     DB.exec %{COMMENT ON COLUMN categories.name  IS '分类名称'}
     DB.exec %{COMMENT ON COLUMN categories.admin IS '版主，空格分割'}
     DB.exec %{COMMENT ON COLUMN categories.rule  IS '版规'}
