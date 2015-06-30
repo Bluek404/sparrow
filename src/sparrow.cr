@@ -14,7 +14,7 @@ module Sparrow
         if result = /^(\/[0-9a-zA-Z]+)$/.match(path)
           Handler.category(request, result[1])
         elsif result = /^(\/[0-9a-zA-Z]+)\/new$/.match(path)
-          Handler.new_topic(request, result[1])
+          Handler.new_thread(request, result[1])
         else
           static_server.call(request)
         end

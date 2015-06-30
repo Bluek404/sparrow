@@ -7,10 +7,10 @@ module Sparrow::Handler
     SecureRandom.hex(64)
   end
   private def new_user()
-    result = DB.exec({String}, "SELECT id FROM last_id WHERE name = 'user'")
+    result = DB.exec({String}, "SELECT id FROM last_id WHERE name = 'user' LIMIT 1")
     last_id = result.rows[0][0]
     id = Base62.encode(Base62.decode(last_id) + 1)
-    DB.exec("UPDATE last_id SET id = $1::text WHERE name = 'user'", [id])
+    DB.exec("UPDATE last_id SET id = $1::text WHERE name = 'user' LIMIT 1", [id])
     key = gen_random_key()
     DB.exec("INSERT INTO users VALUES ($1::text, $2::text)", [id, key])
     {id, key}
@@ -18,7 +18,7 @@ module Sparrow::Handler
   private def check_cookie(cookie)
     if cookie.length == 2
       id, key = cookie[0], cookie[1]
-      result = DB.exec({String}, "SELECT key FROM users WHERE id = $1::text", [id])
+      result = DB.exec({String}, "SELECT key FROM users WHERE id = $1::text LIMIT 1", [id])
       if result.rows.length != 0
         if result.rows[0][0] == key
           return true
@@ -41,7 +41,7 @@ module Sparrow::Handler
   end
   def category(request, category)
     category = DB.exec({String, String, String},
-                       "SELECT name, admin, rule FROM categories WHERE id = $1::text",
+                       "SELECT name, admin, rule FROM categories WHERE id = $1::text LIMIT 1",
                        [category]).rows
     if category.length == 0
       return HTTP::Response.not_found
@@ -49,8 +49,8 @@ module Sparrow::Handler
     category = category[0]
     HTTP::Response.ok("text/html", View::Category.new(category).to_s)
   end
-  def new_topic(request, category)
-    category = DB.exec("SELECT name FROM categories WHERE id = $1::text",
+  def new_thread(request, category)
+    category = DB.exec("SELECT name FROM categories WHERE id = $1::text LIMIT 1",
                        [category]).rows
     if category.length == 0
       return HTTP::Response.not_found
