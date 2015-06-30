@@ -37,8 +37,17 @@ module Sparrow::Handler
 
   def home(request)
     categories = DB.exec({String, String} ,"SELECT id, name FROM categories").rows
-    pp categories
     HTTP::Response.ok("text/html", View::Home.new(categories).to_s)
+  end
+  def category(request, category)
+    category = DB.exec({String, String, String},
+                       "SELECT name, admin, rule FROM categories WHERE id = $1::text",
+                       [category]).rows
+    if category.length == 0
+      return HTTP::Response.not_found
+    end
+    category = category[0]
+    HTTP::Response.ok("text/html", View::Category.new(category).to_s)
   end
   def new_topic(request, category)
     cookie = get_cookie(request)
@@ -51,8 +60,8 @@ module Sparrow::Handler
 
       # 十年后
       time = Time.now + TimeSpan.new(3650, 0, 0, 0)
-      response.set_cookie("id", id, time, nil, nil,nil, true)
-      response.set_cookie("key", key, time, nil, nil,nil, true)
+      response.set_cookie("id", id, time, nil, "/",nil, true)
+      response.set_cookie("key", key, time, nil, "/",nil, true)
       response
     end
   end

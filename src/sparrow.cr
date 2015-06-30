@@ -12,8 +12,7 @@ module Sparrow
         Handler.home(request)
       else
         if result = /^(\/[0-9a-zA-Z]+)$/.match(path)
-          pp result[1]
-          HTTP::Response.ok("text/plain", result[1])
+          Handler.category(request, result[1])
         elsif result = /^(\/[0-9a-zA-Z]+)\/new$/.match(path)
           Handler.new_topic(request, result[1])
         else
