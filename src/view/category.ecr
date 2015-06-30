@@ -6,23 +6,23 @@
   <body>
     <a><%= @category[2] %></a>
     <% (0...@threads.length).each do |i| %>
-    <% thread = @threads[i] %>
-    <% reply = @replies[i] %>
-    <% id, author, content, time = thread[0], thread[1], thread[2], thread[3] %>
-    <div style="border-style: solid; border-width: thick;">
-      <p>
-        <a href="/t/<%= id %>">作者: <%= author %> 时间: <%= time %> <%= content %></a>
-      </p>
-      <% if reply.length > 0 %>
-        <p>回复:</p>
-        <% reply.each do |r| %>
-        <% id, author, content, time = r[0], r[1], r[2], r[3] %>
-          <p>
-            <a href="#<%= id %>">作者: <%= author %> 时间: <%= time %> <%= content %></a>
-          </p>
+      <% thread = @threads[i] %>
+      <% reply = @replies[i] %>
+      <% id, author, content, time = thread[0], thread[1], thread[2], thread[3] %>
+      <div style="border-style: solid; border-width: thick;">
+        <p>
+          <a href="/t/<%= id %>">作者: <%= author %> 时间: <%= time %> <%= content %></a>
+        </p>
+        <% if reply.length > 0 %>
+          <p>回复:</p>
+          <% reply.each do |r| %>
+          <% id, author, content, time = r[0], r[1], r[2], r[3] %>
+            <p>
+              <a href="#<%= id %>">作者: <%= author %> 时间: <%= time %> <%= content %></a>
+            </p>
+          <% end %>
         <% end %>
-      <% end %>
-    </div>
+      </div>
     <% end %>
   </body>
 </html>
