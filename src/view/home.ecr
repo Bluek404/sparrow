@@ -5,5 +5,8 @@
   </head>
   <body>
     <h1>Hello World!</h1>
+    <% @categories.each do |category| %>
+      <a><%= category %></a>
+    <% end %>
   </body>
 </html>

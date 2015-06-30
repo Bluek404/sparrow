@@ -34,16 +34,16 @@ module Sparrow
     DB.exec %{COMMENT ON COLUMN threads.sage      IS '是否下沉'}
 
     DB.exec %{
-      CREATE TABLE IF NOT EXISTS category (
+      CREATE TABLE IF NOT EXISTS categories (
         name  VARCHAR(16),
         admin VARCHAR(256),
         rule  VARCHAR(1024)
       )
     }
-    DB.exec %{COMMENT ON TABLE  category       IS '分类列表'}
-    DB.exec %{COMMENT ON COLUMN category.name  IS '分类名称'}
-    DB.exec %{COMMENT ON COLUMN category.admin IS '版主，空格分割'}
-    DB.exec %{COMMENT ON COLUMN category.rule  IS '版规'}
+    DB.exec %{COMMENT ON TABLE  categories       IS '分类列表'}
+    DB.exec %{COMMENT ON COLUMN categories.name  IS '分类名称'}
+    DB.exec %{COMMENT ON COLUMN categories.admin IS '版主，空格分割'}
+    DB.exec %{COMMENT ON COLUMN categories.rule  IS '版规'}
 
     DB.exec %{
       CREATE TABLE IF NOT EXISTS report (

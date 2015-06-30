@@ -36,7 +36,11 @@ module Sparrow::Handler
   end
 
   def home(request)
-    HTTP::Response.ok("text/html", View::Home.new.to_s)
+    rows = DB.exec({String} ,"SELECT name FROM categories").rows
+    categories = rows.each.inject(Array(String).new) do |array, v|
+      array << v[0]
+    end
+    HTTP::Response.ok("text/html", View::Home.new(categories).to_s)
   end
   def new_topic(request, category)
     cookie = get_cookie(request)
