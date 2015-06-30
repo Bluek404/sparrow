@@ -6,12 +6,19 @@ module Sparrow
   def self.run(port = 8080)
     static_server = HTTP::StaticFileHandler.new("./static")
     server = HTTP::Server.new(port) do |request|
-      pp request.uri.path
-      case request.uri.path
+      path = request.uri.path as String
+      case path
       when "/"
         Handler.home(request)
       else
-        static_server.call(request)
+        if result = /^(\/[0-9a-zA-Z]+)$/.match(path)
+          pp result[1]
+          HTTP::Response.ok("text/plain", result[1])
+        elsif result = /^(\/[0-9a-zA-Z]+)\/new$/.match(path)
+          Handler.new_topic(request, result[1])
+        else
+          static_server.call(request)
+        end
       end
     end
 

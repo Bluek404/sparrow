@@ -15,32 +15,43 @@ module Sparrow::Handler
     DB.exec("INSERT INTO users VALUES ($1::text, $2::text)", [id, key])
     {id, key}
   end
-  private def check_cookie(request, response)
-    if request.cookie.has_key?("id") && request.cookie.has_key?("key")
-      id = request.cookie["id"] as String
-      key = request.cookie["key"] as String
+  private def check_cookie(cookie)
+    if cookie.length == 2
+      id, key = cookie[0], cookie[1]
       result = DB.exec({String}, "SELECT key FROM users WHERE id = $1::text", [id])
       if result.rows.length != 0
         if result.rows[0][0] == key
-          return
+          return true
         end
       end
-
-      # 身份验证失败，当作新用户
-      request.cookie.delete("key")
-      check_cookie(request, response)
-    else
-      id_key = new_user()
-      # 十年后
-      time = Time.now + TimeSpan.new(3650, 0, 0, 0)
-      response.set_cookie("id", id_key[0], time, nil, nil,nil, true)
-      response.set_cookie("key", id_key[1], time, nil, nil,nil, true)
+    end
+    false
+  end
+  private def get_cookie(request)
+    if request.cookie.has_key?("id") && request.cookie.has_key?("key")
+      id = request.cookie["id"] as String
+      key = request.cookie["key"] as String
+      return {id, key}
     end
   end
 
   def home(request)
-    response = HTTP::Response.new(200, View::Home.new.to_s)
-    check_cookie(request, response)
-    response
+    HTTP::Response.ok("text/html", View::Home.new.to_s)
+  end
+  def new_topic(request, category)
+    cookie = get_cookie(request)
+    if cookie && check_cookie(cookie)
+      HTTP::Response.ok("text/html", "id = #{ cookie[0] }, key = #{ cookie[1] }")
+    else
+      cookie = new_user()
+      id, key = cookie[0], cookie[1]
+      response = HTTP::Response.ok("text/html", "new_id = #{ cookie[0] }, new_key = #{ cookie[1] }")
+
+      # 十年后
+      time = Time.now + TimeSpan.new(3650, 0, 0, 0)
+      response.set_cookie("id", id, time, nil, nil,nil, true)
+      response.set_cookie("key", key, time, nil, nil,nil, true)
+      response
+    end
   end
 end
