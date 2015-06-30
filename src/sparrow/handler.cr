@@ -39,15 +39,34 @@ module Sparrow::Handler
     categories = DB.exec({String, String} ,"SELECT id, name FROM categories").rows
     HTTP::Response.ok("text/html", View::Home.new(categories).to_s)
   end
-  def category(request, category)
+  def category(request, category_id)
     category = DB.exec({String, String, String},
                        "SELECT name, admin, rule FROM categories WHERE id = $1::text LIMIT 1",
-                       [category]).rows
+                       [category_id]).rows
     if category.length == 0
       return HTTP::Response.not_found
     end
     category = category[0]
-    HTTP::Response.ok("text/html", View::Category.new(category).to_s)
+    threads = DB.exec({String, String, String, Int32},
+                      "SELECT id, author, content, time FROM threads
+                       WHERE parent = $1::text AND sage = FALSE
+                       ORDER BY modified DESC",
+                      [category_id]).rows
+    pp threads
+    replies = Array(Array({String, String, String, Int32})).new()
+    threads.each do |thread|
+      thread_id = thread[0]
+      # 获取最后 5 个回复
+      # 为了性能所以先倒序获取最后 5 个然后反转过来
+      reply = DB.exec({String, String, String, Int32},
+                      "SELECT id, author, content, time FROM threads
+                       WHERE parent = $1::text AND sage = FALSE
+                       ORDER BY time DESC LIMIT 5",
+                      [thread_id]).rows.reverse
+      replies << reply
+    end
+    pp replies
+    HTTP::Response.ok("text/html", View::Category.new(category, threads, replies).to_s)
   end
   def new_thread(request, category)
     category = DB.exec("SELECT name FROM categories WHERE id = $1::text LIMIT 1",

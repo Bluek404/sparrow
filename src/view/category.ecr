@@ -5,5 +5,21 @@
   </head>
   <body>
     <a><%= @category[2] %></a>
+    <% (0...@threads.length).each do |i| %>
+    <% thread = @threads[i] %>
+    <% reply = @replies[i] %>
+    <% puts "#{ thread }, #{ reply }" %>
+    <div style="border-style: solid; border-width: thick;">
+      <p>
+        <a href="/t/<%= thread[0] %>">作者: <%= thread[1] %> 时间: <%= thread[3] %> <%= thread[2] %></a>
+      </p>
+      <p>回复:</p>
+      <% reply.each do |r| %>
+        <p>
+          <a href="#<%= r[0] %>">作者: <%= r[1] %> 时间: <%= r[3] %> <%= r[2] %></a>
+        </p>
+      <% end %>
+    </div>
+    <% end %>
   </body>
 </html>

@@ -1,6 +1,8 @@
 require "pg"
 
 module Sparrow
+  ZeroEpoch = Time.new(1999, 1, 26).to_i
+
   begin
     @@uri = ENV["SP_URI"]
   rescue

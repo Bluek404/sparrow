@@ -8,7 +8,7 @@ module Sparrow::View
     ecr_file(ViewFileDir + "home.ecr")
   end
   class Category
-    def initialize(@category)
+    def initialize(@category, @threads, @replies)
     end
     ecr_file(ViewFileDir + "category.ecr")
   end
