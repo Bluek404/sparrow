@@ -69,7 +69,7 @@ module Sparrow::Handler
     category = category[0]
     threads = DB.exec({String, String, String, Int32},
                       "SELECT id, author, content, time FROM threads
-                       WHERE parent = $1::text AND sage = FALSE
+                       WHERE parent = $1::text
                        ORDER BY modified DESC LIMIT #{ page*20 } OFFSET #{ (page-1)*20 }",
                       [category_id]).rows
     replies = Array(Array({String, String, String, Int32})).new()
@@ -79,13 +79,14 @@ module Sparrow::Handler
       # 为了性能所以先倒序获取最后 5 个然后反转过来
       reply = DB.exec({String, String, String, Int32},
                       "SELECT id, author, content, time FROM threads
-                       WHERE parent = $1::text AND sage = FALSE
+                       WHERE parent = $1::text
                        ORDER BY time DESC LIMIT 5",
                       [thread_id]).rows.reverse
       replies << reply
     end
     pagination = gen_pagination(page, get_last_page(category_id))
-    HTTP::Response.ok("text/html", View::Category.new(category_id, category, threads, replies, page, pagination).to_s)
+    HTTP::Response.ok("text/html",
+                      View::Category.new(category_id, category, threads, replies, page, pagination).to_s)
   end
   def new_thread(request, category)
     category = DB.exec("SELECT name FROM categories WHERE id = $1::text LIMIT 1",
@@ -107,5 +108,53 @@ module Sparrow::Handler
       response.set_cookie("key", key, time, nil, "/",nil, true)
       response
     end
+  end
+  def thread(request, thread_id, page)
+    thread = DB.exec({String, String, String, Int32},
+                      "SELECT author, content, parent, time FROM threads
+                       WHERE id = $1::text
+                       ORDER BY modified DESC LIMIT 1",
+                      [thread_id]).rows
+    pp thread
+    if thread.length == 0
+      return HTTP::Response.not_found
+    end
+    thread = thread[0]
+    pp thread[2][0]
+
+    # 根据回复的 ID 找到所在串的功能:
+    if thread[2][0] != '/' # 不是 / 开头的，所以不是一个串而是一个串的回复
+      # 查找这个回复所属的串
+      reply = thread
+      reply_id = thread_id
+      parent = reply[2]
+      replies = DB.exec({String},
+                      "SELECT id FROM threads
+                       WHERE parent = $1::text
+                       ORDER BY time DESC",
+                      [parent]).rows
+      if replies.length == 0
+        return HTTP::Response.not_found
+      end
+      # 获得这个回复所处的页数
+      (0...replies.length).each do |i|
+        if replies[i][0] == reply_id
+          where_page = (i+1)/20
+          where_page += 1 if (i+1)%20 != 0
+          # 转跳到这个回复所在的串和页数
+          return HTTP::Response.new(302, nil,
+                                    HTTP::Headers{"Location": "/t/#{ parent }/#{ where_page }##{ reply_id }"})
+        end
+      end
+    end
+
+    category_name = DB.exec({String}, "SELECT name FROM categories WHERE id = $1::text LIMIT 1",
+                       [thread[2]]).rows[0][0]
+    replies = DB.exec({String, String, String, Int32},
+                      "SELECT id, author, content, time FROM threads
+                       WHERE parent = $1::text
+                       ORDER BY time DESC LIMIT #{ page*20 } OFFSET #{ (page-1)*20 }",
+                      [thread_id]).rows
+    HTTP::Response.ok("text/html", "#{ category_name }\n#{ thread }\n#{ replies }")
   end
 end
