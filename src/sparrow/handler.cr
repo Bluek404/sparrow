@@ -128,24 +128,16 @@ module Sparrow::Handler
       reply = thread
       reply_id = thread_id
       parent = reply[2]
-      replies = DB.exec({String},
-                      "SELECT id FROM threads
-                       WHERE parent = $1::text
-                       ORDER BY time DESC",
-                      [parent]).rows
-      if replies.length == 0
-        return HTTP::Response.not_found
-      end
+      # 获取这个回复是串里的第几行
+      where_row = DB.exec({Int32}, "SELECT get_reply_where_row($1::text,$2::text)",
+                          [parent, reply_id]).rows
+      where_row = where_row[0][0]
       # 获得这个回复所处的页数
-      (0...replies.length).each do |i|
-        if replies[i][0] == reply_id
-          where_page = (i+1)/20
-          where_page += 1 if (i+1)%20 != 0
-          # 转跳到这个回复所在的串和页数
-          return HTTP::Response.new(302, nil,
-                                    HTTP::Headers{"Location": "/t/#{ parent }/#{ where_page }##{ reply_id }"})
-        end
-      end
+      where_page = (where_row+1)/20
+      where_page += 1 if (where_row+1)%20 != 0
+      # 转跳到这个回复所在的串和页数
+      return HTTP::Response.new(302, nil,
+                                HTTP::Headers{"Location": "/t/#{ parent }/#{ where_page }##{ reply_id }"})
     end
 
     category_name = DB.exec({String}, "SELECT name FROM categories WHERE id = $1::text LIMIT 1",

@@ -112,5 +112,23 @@ module Sparrow
     if result.rows.length == 0
       DB.exec %{INSERT INTO last_id VALUES ('threads', '0')}
     end
+
+    DB.exec %{
+      CREATE FUNCTION get_reply_where_row(parent_id VARCHAR, reply_id VARCHAR) RETURNS INT AS
+      $$DECLARE
+        i INT = 0;
+        r_id VARCHAR;
+      BEGIN
+        FOR r_id IN
+          SELECT id FROM threads WHERE parent = parent_id ORDER BY time DESC
+        LOOP
+          i = i + 1;
+          IF r_id = reply_id THEN
+            RETURN i;
+          END IF;
+        END LOOP;
+      END
+      $$LANGUAGE plpgsql;
+    }
   end
 end
