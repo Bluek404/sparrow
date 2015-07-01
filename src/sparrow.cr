@@ -13,6 +13,9 @@ module Sparrow
       else
         if result = /^(\/[0-9a-zA-Z]+)$/.match(path)
           Handler.category(request, result[1], 1)
+        elsif result = /^(\/[0-9a-zA-Z]+)\/([0-9]+)$/.match(path)
+          page = result[2].to_i
+          Handler.category(request, result[1], page)
         elsif result = /^(\/[0-9a-zA-Z]+)\/new$/.match(path)
           Handler.new_thread(request, result[1])
         else
