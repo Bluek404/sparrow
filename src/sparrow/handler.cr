@@ -39,6 +39,7 @@ module Sparrow::Handler
                    [parent]).rows[0][0]
     last_page = rows/20
     last_page += 1 if last_page%20 != 0
+    last_page = 1 if last_page = 0
     last_page
   end
   private def gen_pagination(current_page, last_page)
@@ -67,6 +68,11 @@ module Sparrow::Handler
       return HTTP::Response.not_found
     end
     category = category[0]
+    last_page = get_last_page(category_id)
+    if page > last_page
+      return HTTP::Response.not_found
+    end
+    pagination = gen_pagination(page, last_page)
     threads = DB.exec({String, String, String, Int32},
                       "SELECT id, author, content, time FROM threads
                        WHERE parent = $1::text
@@ -84,7 +90,6 @@ module Sparrow::Handler
                       [thread_id]).rows.reverse
       replies << reply
     end
-    pagination = gen_pagination(page, get_last_page(category_id))
     HTTP::Response.ok("text/html",
                       View::Category.new(category_id, category, threads, replies, page, pagination).to_s)
   end
@@ -120,7 +125,11 @@ module Sparrow::Handler
       return HTTP::Response.not_found
     end
     thread = thread[0]
-    pp thread[2][0]
+    last_page = get_last_page(thread_id)
+    if page > last_page
+      return HTTP::Response.not_found
+    end
+    pagination = gen_pagination(page, last_page)
 
     # 根据回复的 ID 找到所在串的功能:
     if thread[2][0] != '/' # 不是 / 开头的，所以不是一个串而是一个串的回复
@@ -133,8 +142,9 @@ module Sparrow::Handler
                           [parent, reply_id]).rows
       where_row = where_row[0][0]
       # 获得这个回复所处的页数
-      where_page = (where_row+1)/20
-      where_page += 1 if (where_row+1)%20 != 0
+      where_page = where_row/20
+      where_page += 1 if where_row%20 != 0
+      where_page = 1 if where_page = 0
       # 转跳到这个回复所在的串和页数
       return HTTP::Response.new(302, nil,
                                 HTTP::Headers{"Location": "/t/#{ parent }/#{ where_page }##{ reply_id }"})
@@ -147,6 +157,6 @@ module Sparrow::Handler
                        WHERE parent = $1::text
                        ORDER BY time DESC LIMIT #{ page*20 } OFFSET #{ (page-1)*20 }",
                       [thread_id]).rows
-    HTTP::Response.ok("text/html", "#{ category_name }\n#{ thread }\n#{ replies }")
+    HTTP::Response.ok("text/html", "#{ category_name }\n#{ thread }\n#{ replies }\n#{ page }\n#{ pagination.to_a }")
   end
 end

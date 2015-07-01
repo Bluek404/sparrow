@@ -127,6 +127,7 @@ module Sparrow
             RETURN i;
           END IF;
         END LOOP;
+        RETURN 0;
       END
       $$LANGUAGE plpgsql;
     }
