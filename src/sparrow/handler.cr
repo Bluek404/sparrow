@@ -34,12 +34,32 @@ module Sparrow::Handler
       return {id, key}
     end
   end
-
+  private def get_last_page(parent)
+    rows = DB.exec({Int32}, "SELECT COUNT(*) FROM threads WHERE  parent = $1::text",
+                   [parent]).rows[0][0]
+    last_page = rows/20
+    last_page += 1 if last_page%20 != 0
+    last_page
+  end
+  private def gen_pagination(current_page, last_page)
+    begin_page = current_page - 4
+    end_page = current_page + 4
+    if begin_page < 1
+      end_page = end_page - (begin_page - 1)
+      begin_page = 1
+      end_page = last_page if end_page > last_page
+    elsif end_page > last_page
+      begin_page = begin_page - (end_page - last_page)
+      end_page = last_page
+      begin_page = 1 if begin_page < 1
+    end
+    begin_page..end_page
+  end
   def home(request)
     categories = DB.exec({String, String} ,"SELECT id, name FROM categories").rows
     HTTP::Response.ok("text/html", View::Home.new(categories).to_s)
   end
-  def category(request, category_id)
+  def category(request, category_id, page)
     category = DB.exec({String, String, String},
                        "SELECT name, admin, rule FROM categories WHERE id = $1::text LIMIT 1",
                        [category_id]).rows
@@ -50,9 +70,8 @@ module Sparrow::Handler
     threads = DB.exec({String, String, String, Int32},
                       "SELECT id, author, content, time FROM threads
                        WHERE parent = $1::text AND sage = FALSE
-                       ORDER BY modified DESC",
+                       ORDER BY modified DESC LIMIT #{ page*20 } OFFSET #{ (page-1)*20 }",
                       [category_id]).rows
-    pp threads
     replies = Array(Array({String, String, String, Int32})).new()
     threads.each do |thread|
       thread_id = thread[0]
@@ -65,8 +84,8 @@ module Sparrow::Handler
                       [thread_id]).rows.reverse
       replies << reply
     end
-    pp replies
-    HTTP::Response.ok("text/html", View::Category.new(category, threads, replies).to_s)
+    pagination = gen_pagination(page, get_last_page(category_id))
+    HTTP::Response.ok("text/html", View::Category.new(category_id, category, threads, replies, page, pagination).to_s)
   end
   def new_thread(request, category)
     category = DB.exec("SELECT name FROM categories WHERE id = $1::text LIMIT 1",

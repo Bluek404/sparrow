@@ -24,5 +24,8 @@
         <% end %>
       </div>
     <% end %>
+    <% @pagination.each do |p| %>
+    <a <% if p != @page %>href="<%= @category_id %>/p/<%= p %>"<% end %>><%= p %></a>
+    <% end %>
   </body>
 </html>
