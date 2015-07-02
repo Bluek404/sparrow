@@ -127,8 +127,7 @@ module Sparrow::Handler
     cookie = get_cookie(request)
     response = HTTP::Response.new(302, nil,
                                   HTTP::Headers{"Location": "#{ category_id }"})
-    if cookie && check_cookie(cookie)
-    else
+    unless cookie && check_cookie(cookie)
       cookie = new_user()
 
       # 十年后
