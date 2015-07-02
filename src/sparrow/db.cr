@@ -1,8 +1,6 @@
 require "pg"
 
 module Sparrow
-  ZeroEpoch = Time.new(1999, 1, 26).to_i
-
   begin
     @@uri = ENV["SP_URI"]
   rescue
@@ -20,9 +18,9 @@ module Sparrow
         author_ip VARCHAR(64),
         content   VARCHAR(512),
         parent    VARCHAR(16),
-        time      BIGINT,
-        modified  BIGINT,
-        sage      BOOLEAN
+        time      TIMESTAMP    DEFAULT now(),
+        modified  TIMESTAMP    DEFAULT now(),
+        sage      BOOLEAN      DEFAULT FALSE
       )
     }
     DB.exec %{COMMENT ON TABLE  threads           IS '帖子列表'}
@@ -55,8 +53,8 @@ module Sparrow
         target   VARCHAR(16),
         category VARCHAR(16),
         reason   VARCHAR(512),
-        close    BOOLEAN,
-        time     BIGINT
+        close    BOOLEAN      DEFAULT FALSE,
+        time     TIMESTAMP    DEFAULT now()
       )
     }
     DB.exec %{COMMENT ON TABLE  report          IS '举报列表'}
@@ -74,7 +72,7 @@ module Sparrow
         category  VARCHAR(16),
         operation VARCHAR(16),
         reason    VARCHAR(512),
-        time      BIGINT
+        time      TIMESTAMP    DEFAULT now()
       )
     }
     DB.exec %{COMMENT ON TABLE  log           IS '管理记录'}
@@ -87,13 +85,15 @@ module Sparrow
 
     DB.exec %{
       CREATE TABLE IF NOT EXISTS users (
-        id  VARCHAR(16),
-        key CHAR(128)
+        id          VARCHAR(16),
+        key         CHAR(128),
+        last_thread VARCHAR(16)
       )
     }
-    DB.exec %{COMMENT ON TABLE  users     IS '用户列表'}
-    DB.exec %{COMMENT ON COLUMN users.id  IS '用户ID'}
-    DB.exec %{COMMENT ON COLUMN users.key IS '用户识别key'}
+    DB.exec %{COMMENT ON TABLE  users              IS '用户列表'}
+    DB.exec %{COMMENT ON COLUMN users.id           IS '用户ID'}
+    DB.exec %{COMMENT ON COLUMN users.key          IS '用户识别key'}
+    DB.exec %{COMMENT ON COLUMN users.last_thread  IS '最后发表的串'}
 
     DB.exec %{
       CREATE TABLE IF NOT EXISTS last_id (

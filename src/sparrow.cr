@@ -6,9 +6,9 @@ module Sparrow
   def self.run(port = 8080)
     static_server = HTTP::StaticFileHandler.new("./static")
     server = HTTP::Server.new(port) do |request|
+      time = Time.now
       path = request.uri.path as String
-      pp path
-      case path
+      response = case path
       when "/"
         Handler.home(request)
       else
@@ -28,6 +28,9 @@ module Sparrow
           static_server.call(request)
         end
       end
+      puts "#{ request.remote_ip }\t#{ request.method }\t#{ path }" \
+        "\t#{ response.status_code }\t#{ (Time.now-time).milliseconds }ms"
+      response
     end
 
     puts "Listening on http://0.0.0.0:#{ port }"

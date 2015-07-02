@@ -57,6 +57,17 @@ module Sparrow::Handler
     end
     begin_page..end_page
   end
+  private def get_thread_id
+    last_id = DB.exec({String}, "SELECT id FROM last_id WHERE name = 'threads' LIMIT 1").rows[0][0]
+    id = Base62.encode(Base62.decode(last_id) + 1)
+    DB.exec("UPDATE last_id SET id = $1::text WHERE name = 'threads'", [id])
+    id
+  end
+  private def save_thread(id, author, author_ip, content, parent)
+    DB.exec("INSERT INTO threads
+             VALUES ($1::text, $2::text, $3::text, $4::text, $5::text)",
+            [id, author, author_ip, content, parent])
+  end
   def home(request)
     categories = DB.exec({String, String} ,"SELECT id, name FROM categories").rows
     HTTP::Response.ok("text/html", View::Home.new(categories).to_s)
@@ -74,17 +85,17 @@ module Sparrow::Handler
       return HTTP::Response.not_found
     end
     pagination = gen_pagination(page, last_page)
-    threads = DB.exec({String, String, String, Int32},
+    threads = DB.exec({String, String, String, Time},
                       "SELECT id, author, content, time FROM threads
                        WHERE parent = $1::text
                        ORDER BY modified DESC LIMIT #{ page*20 } OFFSET #{ (page-1)*20 }",
                       [category_id]).rows
-    replies = Array(Array({String, String, String, Int32})).new()
+    replies = Array(Array({String, String, String, Time})).new()
     threads.each do |thread|
       thread_id = thread[0]
       # 获取最后 5 个回复
       # 为了性能所以先倒序获取最后 5 个然后反转过来
-      reply = DB.exec({String, String, String, Int32},
+      reply = DB.exec({String, String, String, Time},
                       "SELECT id, author, content, time FROM threads
                        WHERE parent = $1::text
                        ORDER BY time DESC LIMIT 5",
@@ -94,40 +105,42 @@ module Sparrow::Handler
     HTTP::Response.ok("text/html",
                       View::Category.new(category_id, category, threads, replies, page, pagination).to_s)
   end
-  def new_thread(request, category)
+  def new_thread(request, category_id)
     if request.method != "POST"
       return HTTP::Response.new(405,
                                 HTTP::Response.default_status_message_for(405))
     end
-    unless request.body
+
+    query = CGI.parse(request.body as String)
+    if !query["content"]? || query["content"][0].length < 3 ||
+      query["content"][0].length > 1024 || query["content"][0] =~ /^[\s]*$/
       return HTTP::Response.new(400,
                                 HTTP::Response.default_status_message_for(400))
     end
 
-    pp CGI.parse(request.body as String)
-
     category = DB.exec("SELECT name FROM categories WHERE id = $1::text LIMIT 1",
-                       [category]).rows
+                       [category_id]).rows
     if category.length == 0
       return HTTP::Response.not_found
     end
+
     cookie = get_cookie(request)
+    response = HTTP::Response.new(302, nil,
+                                  HTTP::Headers{"Location": "#{ category_id }"})
     if cookie && check_cookie(cookie)
-      HTTP::Response.ok("text/html", "id = #{ cookie[0] }, key = #{ cookie[1] }")
     else
       cookie = new_user()
-      id, key = cookie[0], cookie[1]
-      response = HTTP::Response.ok("text/html", "new_id = #{ cookie[0] }, new_key = #{ cookie[1] }")
 
       # 十年后
       time = Time.now + TimeSpan.new(3650, 0, 0, 0)
-      response.set_cookie("id", id, time, nil, "/",nil, true)
-      response.set_cookie("key", key, time, nil, "/",nil, true)
-      response
+      response.set_cookie("id", cookie[0], time, nil, "/",nil, true)
+      response.set_cookie("key", cookie[1], time, nil, "/",nil, true)
     end
+    save_thread(get_thread_id(), cookie[0], request.remote_ip, query["content"][0], category_id)
+    response
   end
   def thread(request, thread_id, page)
-    thread = DB.exec({String, String, String, Int32},
+    thread = DB.exec({String, String, String, Time},
                       "SELECT author, content, parent, time FROM threads
                        WHERE id = $1::text
                        ORDER BY modified DESC LIMIT 1",
@@ -163,7 +176,7 @@ module Sparrow::Handler
 
     category_name = DB.exec({String}, "SELECT name FROM categories WHERE id = $1::text LIMIT 1",
                        [thread[2]]).rows[0][0]
-    replies = DB.exec({String, String, String, Int32},
+    replies = DB.exec({String, String, String, Time},
                       "SELECT id, author, content, time FROM threads
                        WHERE parent = $1::text
                        ORDER BY time DESC LIMIT #{ page*20 } OFFSET #{ (page-1)*20 }",
