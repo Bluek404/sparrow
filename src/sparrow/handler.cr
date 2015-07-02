@@ -1,3 +1,4 @@
+require "cgi"
 require "secure_random"
 
 module Sparrow::Handler
@@ -10,7 +11,7 @@ module Sparrow::Handler
     result = DB.exec({String}, "SELECT id FROM last_id WHERE name = 'user' LIMIT 1")
     last_id = result.rows[0][0]
     id = Base62.encode(Base62.decode(last_id) + 1)
-    DB.exec("UPDATE last_id SET id = $1::text WHERE name = 'user' LIMIT 1", [id])
+    DB.exec("UPDATE last_id SET id = $1::text WHERE name = 'user'", [id])
     key = gen_random_key()
     DB.exec("INSERT INTO users VALUES ($1::text, $2::text)", [id, key])
     {id, key}
@@ -94,6 +95,17 @@ module Sparrow::Handler
                       View::Category.new(category_id, category, threads, replies, page, pagination).to_s)
   end
   def new_thread(request, category)
+    if request.method != "POST"
+      return HTTP::Response.new(405,
+                                HTTP::Response.default_status_message_for(405))
+    end
+    unless request.body
+      return HTTP::Response.new(400,
+                                HTTP::Response.default_status_message_for(400))
+    end
+
+    pp CGI.parse(request.body as String)
+
     category = DB.exec("SELECT name FROM categories WHERE id = $1::text LIMIT 1",
                        [category]).rows
     if category.length == 0
@@ -120,7 +132,6 @@ module Sparrow::Handler
                        WHERE id = $1::text
                        ORDER BY modified DESC LIMIT 1",
                       [thread_id]).rows
-    pp thread
     if thread.length == 0
       return HTTP::Response.not_found
     end

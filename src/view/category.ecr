@@ -5,6 +5,10 @@
   </head>
   <body>
     <a><%= @category[2] %></a>
+    <form action="<%= @category_id %>/new" method="post">
+      <p><textarea rows="3" cols="20" name="content"></textarea></p>
+      <input type="submit" value="发布" />
+    </form>
     <% (0...@threads.length).each do |i| %>
       <% thread = @threads[i] %>
       <% reply = @replies[i] %>
