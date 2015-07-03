@@ -12,4 +12,9 @@ module Sparrow::View
     end
     ecr_file(ViewFileDir + "category.ecr")
   end
+  class Thread
+    def initialize(@category_name, @thread_id, @thread, @replies, @page, @pagination)
+    end
+    ecr_file(ViewFileDir + "thread.ecr")
+  end
 end

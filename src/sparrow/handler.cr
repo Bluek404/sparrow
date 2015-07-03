@@ -81,7 +81,7 @@ module Sparrow::Handler
     end
     category = category[0]
     last_page = get_last_page(category_id)
-    if page > last_page
+    if page > last_page || page < 1
       return HTTP::Response.not_found
     end
     pagination = gen_pagination(page, last_page)
@@ -105,7 +105,7 @@ module Sparrow::Handler
     HTTP::Response.ok("text/html",
                       View::Category.new(category_id, category, threads, replies, page, pagination).to_s)
   end
-  def new_thread(request, category_id)
+  def new_thread(request, parent_id)
     if request.method != "POST"
       return HTTP::Response.new(405,
                                 HTTP::Response.default_status_message_for(405))
@@ -118,15 +118,39 @@ module Sparrow::Handler
                                 HTTP::Response.default_status_message_for(400))
     end
 
-    category = DB.exec("SELECT name FROM categories WHERE id = $1::text LIMIT 1",
-                       [category_id]).rows
-    if category.length == 0
+    is_reply? = parent_id[0] == '/' ? false : true
+
+    parent_exist? = if is_reply?
+      thread = DB.exec({String}, "SELECT parent FROM threads WHERE id = $1::text LIMIT 1",
+                       [parent_id]).rows
+      if thread.length == 0
+        false
+      else
+        thread_parent = thread[0][0]
+        # 检查父级别是否为分类, 用以知道是否为一个单独的串
+        thread_parent[0] == '/' ? true : false
+      end
+    else
+      category = DB.exec("SELECT name FROM categories WHERE id = $1::text LIMIT 1",
+                       [parent_id]).rows
+      category.length == 0 ? false : true
+    end
+    unless parent_exist?
       return HTTP::Response.not_found
     end
 
     cookie = get_cookie(request)
-    response = HTTP::Response.new(302, nil,
-                                  HTTP::Headers{"Location": "#{ category_id }"})
+    if is_reply?
+      rows = DB.exec({Int32}, "SELECT COUNT(*) FROM threads WHERE  parent = $1::text",
+                     [parent_id]).rows[0][0] + 1
+      last_page = rows/20
+      last_page += 1 if last_page%20 != 0
+      last_page = 1 if last_page == 0
+      header = HTTP::Headers{"Location": "/t/#{ parent_id }/#{ last_page }"}
+    else
+      header = HTTP::Headers{"Location": "#{ parent_id }"}
+    end
+    response = HTTP::Response.new(302, nil, header)
     unless cookie && check_cookie(cookie)
       cookie = new_user()
 
@@ -135,7 +159,7 @@ module Sparrow::Handler
       response.set_cookie("id", cookie[0], time, nil, "/",nil, true)
       response.set_cookie("key", cookie[1], time, nil, "/",nil, true)
     end
-    save_thread(get_thread_id(), cookie[0], request.remote_ip, query["content"][0], category_id)
+    save_thread(get_thread_id(), cookie[0], request.remote_ip, query["content"][0], parent_id)
     response
   end
   def thread(request, thread_id, page)
@@ -149,7 +173,7 @@ module Sparrow::Handler
     end
     thread = thread[0]
     last_page = get_last_page(thread_id)
-    if page > last_page
+    if page > last_page || page < 1
       return HTTP::Response.not_found
     end
     pagination = gen_pagination(page, last_page)
@@ -180,6 +204,6 @@ module Sparrow::Handler
                        WHERE parent = $1::text
                        ORDER BY time DESC LIMIT #{ page*20 } OFFSET #{ (page-1)*20 }",
                       [thread_id]).rows
-    HTTP::Response.ok("text/html", "#{ category_name }\n#{ thread }\n#{ replies }\n#{ page }\n#{ pagination.to_a }")
+    HTTP::Response.ok("text/html", View::Thread.new(category_name, thread_id, thread, replies, page, pagination).to_s)
   end
 end

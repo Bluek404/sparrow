@@ -24,6 +24,8 @@ module Sparrow
         elsif result = /^\/t\/([0-9a-zA-Z]{1,16})\/([0-9]+)$/.match(path)
           page = result[2].to_i
           Handler.thread(request, result[1], page)
+        elsif result = /^\/t\/([0-9a-zA-Z]{1,16})\/reply$/.match(path)
+          Handler.new_thread(request, result[1])
         else
           static_server.call(request)
         end
