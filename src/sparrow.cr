@@ -11,6 +11,8 @@ module Sparrow
       response = case path
       when "/"
         Handler.home(request)
+      when "/Eloim_Essaim_frugativi_et_appellavi"
+        Handler.del_last_thread(request)
       else
         if result = /^(\/[0-9a-zA-Z]{2,16})$/.match(path)
           Handler.category(request, result[1], 1)

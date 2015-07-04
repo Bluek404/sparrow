@@ -150,6 +150,9 @@ module Sparrow::Handler
     save_thread(thread_id , cookie[0], request.remote_ip, query["content"][0], parent_id)
     DB.exec("UPDATE users SET last_thread = $1::text WHERE id = $2::text",
             [thread_id, cookie[0]])
+    if is_reply?
+      DB.exec("UPDATE threads SET modified = now() WHERE id = $1::text", [parent_id])
+    end
     response
   end
   def thread(request, thread_id, page)
@@ -193,5 +196,24 @@ module Sparrow::Handler
                       [thread_id]).rows
     HTTP::Response.ok("text/html",
                       View::Thread.new(category_name, thread_id, thread, replies, page, last_page).to_s)
+  end
+  def del_last_thread(request)
+    cookie = get_cookie(request)
+    if cookie && check_cookie(cookie)
+      user_id = cookie[0]
+      last_thread = DB.exec({String},
+                            "SELECT last_thread FROM users WHERE id = $1::text",
+                            [user_id]).rows[0][0]
+      if last_thread != ""
+        DB.exec("DELETE FROM threads WHERE id = $1::text", [last_thread])
+        DB.exec("UPDATE users SET last_thread = '' WHERE id = $1::text", [user_id])
+        HTTP::Response.ok("text/html", "OK")
+      else
+        HTTP::Response.new(403, "没有可以删除的串")
+      end
+    else
+      HTTP::Response.new(403,
+                         HTTP::Response.default_status_message_for(403))
+    end
   end
 end
