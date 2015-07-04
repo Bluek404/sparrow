@@ -87,7 +87,7 @@ module Sparrow
       CREATE TABLE IF NOT EXISTS users (
         id          VARCHAR(16),
         key         CHAR(128),
-        last_thread VARCHAR(16)
+        last_thread VARCHAR(16) DEFAULT ''
       )
     }
     DB.exec %{COMMENT ON TABLE  users              IS '用户列表'}

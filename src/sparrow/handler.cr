@@ -35,27 +35,18 @@ module Sparrow::Handler
       return {id, key}
     end
   end
-  private def get_last_page(parent)
-    rows = DB.exec({Int32}, "SELECT COUNT(*) FROM threads WHERE  parent = $1::text",
-                   [parent]).rows[0][0]
-    last_page = rows/20
-    last_page += 1 if last_page%20 != 0
-    last_page = 1 if last_page = 0
-    last_page
+  private def get_rows_num(parent)
+    DB.exec({Int32}, "SELECT COUNT(*) FROM threads WHERE  parent = $1::text",
+            [parent]).rows[0][0]
   end
-  private def gen_pagination(current_page, last_page)
-    begin_page = current_page - 4
-    end_page = current_page + 4
-    if begin_page < 1
-      end_page = end_page - (begin_page - 1)
-      begin_page = 1
-      end_page = last_page if end_page > last_page
-    elsif end_page > last_page
-      begin_page = begin_page - (end_page - last_page)
-      end_page = last_page
-      begin_page = 1 if begin_page < 1
-    end
-    begin_page..end_page
+  private def rows_to_pages(rows)
+    page = rows/20
+    page += 1 if page%20 != 0
+    page = 1 if page == 0
+    page
+  end
+  private def get_last_page(parent)
+    rows_to_pages(get_rows_num(parent))
   end
   private def get_thread_id
     last_id = DB.exec({String}, "SELECT id FROM last_id WHERE name = 'threads' LIMIT 1").rows[0][0]
@@ -84,26 +75,26 @@ module Sparrow::Handler
     if page > last_page || page < 1
       return HTTP::Response.not_found
     end
-    pagination = gen_pagination(page, last_page)
     threads = DB.exec({String, String, String, Time},
                       "SELECT id, author, content, time FROM threads
                        WHERE parent = $1::text
                        ORDER BY modified DESC LIMIT #{ page*20 } OFFSET #{ (page-1)*20 }",
                       [category_id]).rows
-    replies = Array(Array({String, String, String, Time})).new()
+    category_data = Array(Tuple({String, String, String, Time}, Array({String, String, String, Time}), Int32)).new()
+
     threads.each do |thread|
       thread_id = thread[0]
       # 获取最后 5 个回复
-      # 为了性能所以先倒序获取最后 5 个然后反转过来
+      reply_num = get_rows_num(thread_id)
       reply = DB.exec({String, String, String, Time},
                       "SELECT id, author, content, time FROM threads
                        WHERE parent = $1::text
-                       ORDER BY time DESC LIMIT 5",
-                      [thread_id]).rows.reverse
-      replies << reply
+                       ORDER BY time LIMIT #{ reply_num } OFFSET #{ reply_num-5<0 ? 0 : reply_num-5 }",
+                      [thread_id]).rows
+      category_data << {thread, reply, reply_num}
     end
     HTTP::Response.ok("text/html",
-                      View::Category.new(category_id, category, threads, replies, page, pagination).to_s)
+                      View::Category.new(category_id, category, category_data, page, last_page).to_s)
   end
   def new_thread(request, parent_id)
     if request.method != "POST"
@@ -140,15 +131,12 @@ module Sparrow::Handler
     end
 
     cookie = get_cookie(request)
+    thread_id = get_thread_id()
     if is_reply?
-      rows = DB.exec({Int32}, "SELECT COUNT(*) FROM threads WHERE  parent = $1::text",
-                     [parent_id]).rows[0][0] + 1
-      last_page = rows/20
-      last_page += 1 if last_page%20 != 0
-      last_page = 1 if last_page == 0
-      header = HTTP::Headers{"Location": "/t/#{ parent_id }/#{ last_page }"}
+      last_page = rows_to_pages(get_rows_num(parent_id)+1)
+      header = HTTP::Headers{"Location": "/t/#{ parent_id }/#{ last_page }##{ thread_id }"}
     else
-      header = HTTP::Headers{"Location": "#{ parent_id }"}
+      header = HTTP::Headers{"Location": "/t/#{ thread_id }"}
     end
     response = HTTP::Response.new(302, nil, header)
     unless cookie && check_cookie(cookie)
@@ -159,7 +147,9 @@ module Sparrow::Handler
       response.set_cookie("id", cookie[0], time, nil, "/",nil, true)
       response.set_cookie("key", cookie[1], time, nil, "/",nil, true)
     end
-    save_thread(get_thread_id(), cookie[0], request.remote_ip, query["content"][0], parent_id)
+    save_thread(thread_id , cookie[0], request.remote_ip, query["content"][0], parent_id)
+    DB.exec("UPDATE users SET last_thread = $1::text WHERE id = $2::text",
+            [thread_id, cookie[0]])
     response
   end
   def thread(request, thread_id, page)
@@ -176,7 +166,6 @@ module Sparrow::Handler
     if page > last_page || page < 1
       return HTTP::Response.not_found
     end
-    pagination = gen_pagination(page, last_page)
 
     # 根据回复的 ID 找到所在串的功能:
     if thread[2][0] != '/' # 不是 / 开头的，所以不是一个串而是一个串的回复
@@ -189,9 +178,7 @@ module Sparrow::Handler
                           [parent, reply_id]).rows
       where_row = where_row[0][0]
       # 获得这个回复所处的页数
-      where_page = where_row/20
-      where_page += 1 if where_row%20 != 0
-      where_page = 1 if where_page = 0
+      where_page = rows_to_pages(where_row)
       # 转跳到这个回复所在的串和页数
       return HTTP::Response.new(302, nil,
                                 HTTP::Headers{"Location": "/t/#{ parent }/#{ where_page }##{ reply_id }"})
@@ -202,8 +189,9 @@ module Sparrow::Handler
     replies = DB.exec({String, String, String, Time},
                       "SELECT id, author, content, time FROM threads
                        WHERE parent = $1::text
-                       ORDER BY time DESC LIMIT #{ page*20 } OFFSET #{ (page-1)*20 }",
+                       ORDER BY time LIMIT #{ page*20 } OFFSET #{ (page-1)*20 }",
                       [thread_id]).rows
-    HTTP::Response.ok("text/html", View::Thread.new(category_name, thread_id, thread, replies, page, pagination).to_s)
+    HTTP::Response.ok("text/html",
+                      View::Thread.new(category_name, thread_id, thread, replies, page, last_page).to_s)
   end
 end
