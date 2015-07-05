@@ -59,13 +59,20 @@ module Sparrow::Handler
              VALUES ($1::text, $2::text, $3::text, $4::text, $5::text)",
             [id, author, author_ip, content, parent])
   end
+  private def is_admin?(category_id, user_id)
+    yes = DB.exec({Bool}, "SELECT id = $1::text AND admins @> $2::jsonb FROM categories",
+                    [category_id, [user_id]]).rows[0][0]
+    pp category_id
+    pp user_id
+    yes ? true : false
+  end
   def home(request)
     categories = DB.exec({String, String} ,"SELECT id, name FROM categories").rows
     HTTP::Response.ok("text/html", View::Home.new(categories).to_s)
   end
   def category(request, category_id, page)
-    category = DB.exec({String, String, String},
-                       "SELECT name, admin, rule FROM categories WHERE id = $1::text LIMIT 1",
+    category = DB.exec({String, Array(JSON::Type), String},
+                       "SELECT name, admins, rule FROM categories WHERE id = $1::text LIMIT 1",
                        [category_id]).rows
     if category.length == 0
       return HTTP::Response.not_found
@@ -75,12 +82,12 @@ module Sparrow::Handler
     if page > last_page || page < 1
       return HTTP::Response.not_found
     end
-    threads = DB.exec({String, String, String, Time},
-                      "SELECT id, author, content, time FROM threads
+    threads = DB.exec({String, String, String, Bool, Time},
+                      "SELECT id, author, content, sage, time FROM threads
                        WHERE parent = $1::text
                        ORDER BY modified DESC LIMIT #{ page*20 } OFFSET #{ (page-1)*20 }",
                       [category_id]).rows
-    category_data = Array(Tuple({String, String, String, Time}, Array({String, String, String, Time}), Int32)).new()
+    category_data = Array(Tuple({String, String, String, Bool, Time}, Array({String, String, String, Time}), Int32)).new()
 
     threads.each do |thread|
       thread_id = thread[0]
@@ -112,12 +119,12 @@ module Sparrow::Handler
     is_reply? = parent_id[0] == '/' ? false : true
 
     parent_exist? = if is_reply?
-      thread = DB.exec({String}, "SELECT parent FROM threads WHERE id = $1::text LIMIT 1",
+      rows = DB.exec({String, Bool}, "SELECT parent, sage FROM threads WHERE id = $1::text LIMIT 1",
                        [parent_id]).rows
-      if thread.length == 0
+      if rows.length == 0
         false
       else
-        thread_parent = thread[0][0]
+        thread_parent, sage = rows[0][0], rows[0][1]
         # 检查父级别是否为分类, 用以知道是否为一个单独的串
         thread_parent[0] == '/' ? true : false
       end
@@ -150,14 +157,14 @@ module Sparrow::Handler
     save_thread(thread_id , cookie[0], request.remote_ip, query["content"][0], parent_id)
     DB.exec("UPDATE users SET last_thread = $1::text WHERE id = $2::text",
             [thread_id, cookie[0]])
-    if is_reply?
+    if is_reply? && !sage
       DB.exec("UPDATE threads SET modified = now() WHERE id = $1::text", [parent_id])
     end
     response
   end
   def thread(request, thread_id, page)
-    thread = DB.exec({String, String, String, Time},
-                      "SELECT author, content, parent, time FROM threads
+    thread = DB.exec({String, String, String, Bool, Time},
+                      "SELECT author, content, parent, sage, time FROM threads
                        WHERE id = $1::text
                        ORDER BY modified DESC LIMIT 1",
                       [thread_id]).rows
@@ -211,6 +218,23 @@ module Sparrow::Handler
       else
         HTTP::Response.new(403, "没有可以删除的串")
       end
+    else
+      HTTP::Response.new(403,
+                         HTTP::Response.default_status_message_for(403))
+    end
+  end
+  def sage_thread(request, thread_id)
+    cookie = get_cookie(request)
+    category = DB.exec({String},
+                       "SELECT parent FROM threads WHERE id = $1::text",
+                       [thread_id]).rows
+    # 确保cookie存在 && cookie有效 && 串存在 &&
+    # 串的父级别为分类(这个串为一个独立串而不是回复) && 用户为此分类的管理者
+    if cookie && check_cookie(cookie) && category.length != 0 &&
+      category[0][0][0] == '/' && is_admin?(category[0][0], cookie[0])
+      DB.exec("UPDATE threads SET sage = $1::bool WHERE id = $2::text",
+              [true, thread_id])
+      HTTP::Response.ok("text/html", "OK")
     else
       HTTP::Response.new(403,
                          HTTP::Response.default_status_message_for(403))

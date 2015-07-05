@@ -8,7 +8,7 @@
       <p><textarea rows="3" cols="20" name="content"></textarea></p>
       <input type="submit" value="回复" />
     </form>
-    <p>作者: <%= @thread[0] %> 时间: <%= @thread[3] %></p>
+    <p>作者: <%= @thread[0] %> 时间: <%= @thread[4] %><% if @thread[3] %><a> SAGE </a><% end %></p>
     <p><%= @thread[1] %></p>
     <% @replies.each do |r| %>
       <% id, author, content, time = r[0], r[1], r[2], r[3] %>
