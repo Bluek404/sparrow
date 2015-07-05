@@ -28,8 +28,9 @@ module Sparrow
           Handler.thread(request, result[1], page)
         elsif result = /^\/t\/([0-9a-zA-Z]{1,16})\/reply$/.match(path)
           Handler.new_thread(request, result[1])
-        elsif result = /^\/t\/([0-9a-zA-Z]{1,16})\/sage$/.match(path)
-          Handler.sage_thread(request, result[1])
+        elsif result = /^\/t\/([0-9a-zA-Z]{1,16})\/sage\/$/.match(path)
+          reason = request.uri.query
+          Handler.sage_thread(request, result[1], reason)
         else
           static_server.call(request)
         end

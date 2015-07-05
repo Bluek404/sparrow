@@ -62,8 +62,6 @@ module Sparrow::Handler
   private def is_admin?(category_id, user_id)
     yes = DB.exec({Bool}, "SELECT id = $1::text AND admins @> $2::jsonb FROM categories",
                     [category_id, [user_id]]).rows[0][0]
-    pp category_id
-    pp user_id
     yes ? true : false
   end
   def home(request)
@@ -223,7 +221,12 @@ module Sparrow::Handler
                          HTTP::Response.default_status_message_for(403))
     end
   end
-  def sage_thread(request, thread_id)
+  def sage_thread(request, thread_id, reason)
+    unless reason
+      return HTTP::Response.new(400,
+                                HTTP::Response.default_status_message_for(400))
+    end
+    reason = CGI.unescape(reason as String)
     cookie = get_cookie(request)
     category = DB.exec({String},
                        "SELECT parent FROM threads WHERE id = $1::text",
@@ -234,6 +237,8 @@ module Sparrow::Handler
       category[0][0][0] == '/' && is_admin?(category[0][0], cookie[0])
       DB.exec("UPDATE threads SET sage = $1::bool WHERE id = $2::text",
               [true, thread_id])
+      DB.exec("INSERT INTO log VALUES ($1::text, $2::text, $3::text, $4::text, $5::text)",
+             [cookie[0], thread_id, category[0][0], "SAGE", reason])
       HTTP::Response.ok("text/html", "OK")
     else
       HTTP::Response.new(403,
