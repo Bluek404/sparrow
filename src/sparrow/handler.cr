@@ -98,8 +98,15 @@ module Sparrow::Handler
                       [thread_id]).rows
       category_data << {thread, reply, reply_num}
     end
+    cookie = get_cookie(request)
+    if cookie && check_cookie(cookie) && category[1].includes?(cookie[0])
+      is_admin? = true
+    else
+      is_admin? = false
+    end
+    pp is_admin?
     HTTP::Response.ok("text/html",
-                      View::Category.new(category_id, category, category_data, page, last_page).to_s)
+                      View::Category.new(category_id, category, category_data, page, last_page, is_admin?).to_s)
   end
   def new_thread(request, parent_id)
     if request.method != "POST"
@@ -192,15 +199,22 @@ module Sparrow::Handler
                                 HTTP::Headers{"Location": "/t/#{ parent }/#{ where_page }##{ reply_id }"})
     end
 
-    category_name = DB.exec({String}, "SELECT name FROM categories WHERE id = $1::text LIMIT 1",
-                       [thread[2]]).rows[0][0]
+    rows = DB.exec({String, Array(JSON::Type)}, "SELECT name, admins FROM categories WHERE id = $1::text LIMIT 1",
+                   [thread[2]]).rows[0]
+    category_name = rows[0]
     replies = DB.exec({String, String, String, Time},
                       "SELECT id, author, content, time FROM threads
                        WHERE parent = $1::text
                        ORDER BY time LIMIT #{ page*20 } OFFSET #{ (page-1)*20 }",
                       [thread_id]).rows
+    cookie = get_cookie(request)
+    if cookie && check_cookie(cookie) && rows[1].includes?(cookie[0])
+      is_admin? = true
+    else
+      is_admin? = false
+    end
     HTTP::Response.ok("text/html",
-                      View::Thread.new(category_name, thread_id, thread, replies, page, last_page).to_s)
+                      View::Thread.new(category_name, thread_id, thread, replies, page, last_page, is_admin?).to_s)
   end
   def del_last_thread(request)
     cookie = get_cookie(request)

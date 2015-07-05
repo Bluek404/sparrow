@@ -22,13 +22,13 @@ module Sparrow::View
     ecr_file(ViewFileDir + "home.ecr")
   end
   class Category
-    def initialize(@category_id, @category, @data, @page, @last_page)
+    def initialize(@category_id, @category, @data, @page, @last_page, @is_admin)
       @pagination = View.gen_pagination(@page, @last_page)
     end
     ecr_file(ViewFileDir + "category.ecr")
   end
   class Thread
-    def initialize(@category_name, @thread_id, @thread, @replies, @page, @last_page)
+    def initialize(@category_name, @thread_id, @thread, @replies, @page, @last_page, @is_admin)
       @pagination = View.gen_pagination(@page, @last_page)
     end
     ecr_file(ViewFileDir + "thread.ecr")
