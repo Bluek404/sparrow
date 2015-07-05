@@ -245,4 +245,43 @@ module Sparrow::Handler
                          HTTP::Response.default_status_message_for(403))
     end
   end
+  def del_thread(request, thread_id, reason)
+    unless reason
+      return HTTP::Response.new(400,
+                                HTTP::Response.default_status_message_for(400))
+    end
+    reason = CGI.unescape(reason as String)
+    cookie = get_cookie(request)
+    unless cookie && check_cookie(cookie)
+      return HTTP::Response.new(403,
+                                HTTP::Response.default_status_message_for(403))
+    end
+    parent = DB.exec({String},
+                     "SELECT parent FROM threads WHERE id = $1::text",
+                     [thread_id]).rows
+    if parent.length == 0
+      return HTTP::Response.not_found
+    end
+    parent = parent[0][0]
+    is_reply? = parent[0] != '/' ? true : false
+
+    if is_reply?
+      category_id = DB.exec({String},
+                       "SELECT parent FROM threads WHERE id = $1::text",
+                       [parent]).rows[0][0]
+    else
+      category_id = parent
+    end
+
+    if is_admin?(category_id, cookie[0])
+      DB.exec("DELETE FROM threads WHERE id = $1::text",
+              [thread_id])
+      DB.exec("INSERT INTO log VALUES ($1::text, $2::text, $3::text, $4::text, $5::text)",
+             [cookie[0], thread_id, category_id, "DEL", reason])
+      HTTP::Response.ok("text/html", "OK")
+    else
+      HTTP::Response.new(403,
+                         HTTP::Response.default_status_message_for(403))
+    end
+  end
 end
