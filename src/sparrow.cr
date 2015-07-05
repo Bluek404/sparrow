@@ -10,7 +10,8 @@ module Sparrow
       begin
         path = request.uri.path as String
       rescue
-        return HTTP::Response.not_found
+        response = HTTP::Response.not_found
+        path = request.path
       end
       response = case path
       when "/"
@@ -41,7 +42,7 @@ module Sparrow
         else
           static_server.call(request)
         end
-      end
+      end unless response
       puts "#{ request.remote_ip }\t#{ request.method }\t#{ path }" \
         "\t#{ response.status_code }\t#{ (Time.now-time).milliseconds }ms"
       response
