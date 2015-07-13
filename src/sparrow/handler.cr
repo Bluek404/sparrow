@@ -332,6 +332,6 @@ module Sparrow::Handler
       is_admin? = false
     end
     HTTP::Response.ok("text/html",
-                      View::Log.new(category_id, category[0][0], reports, logs, page, last_page, is_admin?).to_s)
+                      View::Log.new(category_id, category[0], reports, logs, page, last_page, is_admin?).to_s)
   end
 end
