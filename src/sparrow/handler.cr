@@ -36,7 +36,7 @@ module Sparrow::Handler
     end
   end
   private def get_rows_num(parent)
-    DB.exec({Int32}, "SELECT COUNT(*) FROM threads WHERE  parent = $1::text",
+    DB.exec({Int32}, "SELECT COUNT(*) FROM threads WHERE parent = $1::text",
             [parent]).rows[0][0]
   end
   private def rows_to_pages(rows)
@@ -297,5 +297,41 @@ module Sparrow::Handler
       HTTP::Response.new(403,
                          HTTP::Response.default_status_message_for(403))
     end
+  end
+  def log(request, category_id, page)
+    category = DB.exec({String, Array(JSON::Type)},
+                       "SELECT name, admins FROM categories WHERE id = $1::text LIMIT 1",
+                       [category_id]).rows
+    if category.length == 0
+      return HTTP::Response.not_found
+    end
+    category = category[0]
+    r0 = DB.exec({Int32}, "SELECT COUNT(*) FROM report WHERE category = $1::text",
+            [category_id]).rows[0][0]
+    r1 = DB.exec({Int32}, "SELECT COUNT(*) FROM log WHERE category = $1::text",
+            [category_id]).rows[0][0]
+    rows = r0 > r1 ? r0 : r1
+    last_page = rows_to_pages(rows)
+    if page > last_page || page < 1
+      return HTTP::Response.not_found
+    end
+    reports = DB.exec({String, String, String, Bool, Time},
+                      "SELECT author, target, reason, close, time FROM report
+                       WHERE category = $1::text
+                       ORDER BY time DESC LIMIT #{ page*20 } OFFSET #{ (page-1)*20 }",
+                      [category_id]).rows
+    logs = DB.exec({String, String, String, String, Time},
+                   "SELECT handler, target, reason, operation, time FROM log
+                    WHERE category = $1::text
+                    ORDER BY time DESC LIMIT #{ page*20 } OFFSET #{ (page-1)*20 }",
+                   [category_id]).rows
+    cookie = get_cookie(request)
+    if cookie && check_cookie(cookie) && category[1].includes?(cookie[0])
+      is_admin? = true
+    else
+      is_admin? = false
+    end
+    HTTP::Response.ok("text/html",
+                      View::Log.new(category_id, category[0][0], reports, logs, page, last_page, is_admin?).to_s)
   end
 end

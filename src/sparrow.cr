@@ -26,6 +26,11 @@ module Sparrow
           Handler.category(request, result[1], page)
         elsif result = /^(\/[0-9a-zA-Z]{2,16})\/new$/.match(path)
           Handler.new_thread(request, result[1])
+        elsif result = /^(\/[0-9a-zA-Z]{2,16})\/log$/.match(path)
+          Handler.log(request, result[1], 1)
+        elsif result = /^(\/[0-9a-zA-Z]{2,16})\/log\/([0-9]+)$/.match(path)
+          page = result[2].to_i
+          Handler.log(request, result[1], page)
         elsif result = /^\/t\/([0-9a-zA-Z]{1,16})$/.match(path)
           Handler.thread(request, result[1], 1)
         elsif result = /^\/t\/([0-9a-zA-Z]{1,16})\/([0-9]+)$/.match(path)

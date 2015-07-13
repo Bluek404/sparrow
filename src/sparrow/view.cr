@@ -33,4 +33,10 @@ module Sparrow::View
     end
     ecr_file(ViewFileDir + "thread.ecr")
   end
+  class Log
+    def initialize(@category_id, @category_name, @reports, @logs, @page, @last_page, @is_admin)
+      @pagination = View.gen_pagination(@page, @last_page)
+    end
+    ecr_file(ViewFileDir + "log.ecr")
+  end
 end
