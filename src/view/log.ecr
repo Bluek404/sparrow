@@ -11,7 +11,7 @@
         <% if close %>
           <p>CLOSED</p>
         <% elsif @is_admin %>
-          <p><a href="">CLOSE</a></p>
+        <p><a href="/c/<%= target %>">CLOSE</a></p>
         <% end %>
         <p><%= reason %></p>
       </div>
