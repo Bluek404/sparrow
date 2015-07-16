@@ -44,6 +44,9 @@ module Sparrow
         elsif result = /^\/d\/([0-9a-zA-Z]{1,16})\/$/.match(path)
           reason = request.uri.query
           Handler.del_thread(request, result[1], reason)
+        elsif result = /^\/r\/([0-9a-zA-Z]{1,16})\/$/.match(path)
+          reason = request.uri.query
+          Handler.report(request, result[1], reason)
         else
           static_server.call(request)
         end

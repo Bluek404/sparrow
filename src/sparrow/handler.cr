@@ -64,6 +64,24 @@ module Sparrow::Handler
                     [category_id, [user_id]]).rows[0][0]
     yes ? true : false
   end
+  private def get_category_id(id)
+    parent = DB.exec({String},
+                     "SELECT parent FROM threads WHERE id = $1::text LIMIT 1",
+                     [id]).rows
+    if parent.length == 0
+      return nil
+    end
+    parent = parent[0][0]
+    is_reply? = parent[0] != '/' ? true : false
+
+    if is_reply?
+      DB.exec({String},
+              "SELECT parent FROM threads WHERE id = $1::text LIMIT 1",
+              [parent]).rows[0][0]
+    else
+      parent
+    end
+  end
   def home(request)
     categories = DB.exec({String, String} ,"SELECT id, name FROM categories").rows
     HTTP::Response.ok("text/html", View::Home.new(categories).to_s)
@@ -125,7 +143,7 @@ module Sparrow::Handler
 
     parent_exist? = if is_reply?
       rows = DB.exec({String, Bool}, "SELECT parent, sage FROM threads WHERE id = $1::text LIMIT 1",
-                       [parent_id]).rows
+                     [parent_id]).rows
       if rows.length == 0
         false
       else
@@ -221,7 +239,7 @@ module Sparrow::Handler
     if cookie && check_cookie(cookie)
       user_id = cookie[0]
       last_thread = DB.exec({String},
-                            "SELECT last_thread FROM users WHERE id = $1::text",
+                            "SELECT last_thread FROM users WHERE id = $1::text LIMIT 1",
                             [user_id]).rows[0][0]
       if last_thread != ""
         DB.exec("DELETE FROM threads WHERE id = $1::text", [last_thread])
@@ -243,7 +261,7 @@ module Sparrow::Handler
     reason = CGI.unescape(reason as String)
     cookie = get_cookie(request)
     category = DB.exec({String},
-                       "SELECT parent FROM threads WHERE id = $1::text",
+                       "SELECT parent FROM threads WHERE id = $1::text LIMIT 1",
                        [thread_id]).rows
     # 确保cookie存在 && cookie有效 && 串存在 &&
     # 串的父级别为分类(这个串为一个独立串而不是回复) && 用户为此分类的管理者
@@ -270,21 +288,9 @@ module Sparrow::Handler
       return HTTP::Response.new(403,
                                 HTTP::Response.default_status_message_for(403))
     end
-    parent = DB.exec({String},
-                     "SELECT parent FROM threads WHERE id = $1::text",
-                     [thread_id]).rows
-    if parent.length == 0
+    category_id = get_category_id(thread_id)
+    unless category_id
       return HTTP::Response.not_found
-    end
-    parent = parent[0][0]
-    is_reply? = parent[0] != '/' ? true : false
-
-    if is_reply?
-      category_id = DB.exec({String},
-                       "SELECT parent FROM threads WHERE id = $1::text",
-                       [parent]).rows[0][0]
-    else
-      category_id = parent
     end
 
     if is_admin?(category_id, cookie[0])
@@ -333,5 +339,24 @@ module Sparrow::Handler
     end
     HTTP::Response.ok("text/html",
                       View::Log.new(category_id, category[0], reports, logs, page, last_page, is_admin?).to_s)
+  end
+  def report(request, target, reason)
+    unless reason
+      return HTTP::Response.new(400,
+                                HTTP::Response.default_status_message_for(400))
+    end
+    reason = CGI.unescape(reason as String)
+    cookie = get_cookie(request)
+    unless cookie && check_cookie(cookie)
+      return HTTP::Response.new(403,
+                                HTTP::Response.default_status_message_for(403))
+    end
+    category_id = get_category_id(target)
+    unless category_id
+      return HTTP::Response.not_found
+    end
+    DB.exec("INSERT INTO report VALUES ($1::text, $2::text, $3::text, $4::text)",
+            [cookie[0], target, category_id, reason])
+    HTTP::Response.ok("text/html", "OK")
   end
 end
