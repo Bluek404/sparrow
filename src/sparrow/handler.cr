@@ -359,4 +359,25 @@ module Sparrow::Handler
             [cookie[0], target, category_id, reason])
     HTTP::Response.ok("text/html", "OK")
   end
+  def close_report(request, target_id)
+    cookie = get_cookie(request)
+    unless cookie && check_cookie(cookie)
+      return HTTP::Response.new(403,
+                                HTTP::Response.default_status_message_for(403))
+    end
+    r = DB.exec({String}, "SELECT category FROM report WHERE target = $1::text LIMIT 1",
+                [target_id]).rows
+    if r.length == 0
+      return HTTP::Response.not_found
+    end
+    category_id = r[0][0]
+    if is_admin?(category_id, cookie[0])
+      DB.exec("UPDATE report SET close = TRUE WHERE target = $1::text",
+              [target_id])
+      HTTP::Response.ok("text/html", "OK")
+    else
+      HTTP::Response.new(403,
+                         HTTP::Response.default_status_message_for(403))
+    end
+  end
 end

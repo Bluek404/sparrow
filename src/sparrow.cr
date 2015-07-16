@@ -47,6 +47,8 @@ module Sparrow
         elsif result = /^\/r\/([0-9a-zA-Z]{1,16})\/$/.match(path)
           reason = request.uri.query
           Handler.report(request, result[1], reason)
+        elsif result = /^\/c\/([0-9a-zA-Z]{1,16})$/.match(path)
+          Handler.close_report(request, result[1])
         else
           static_server.call(request)
         end
