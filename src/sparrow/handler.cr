@@ -41,7 +41,7 @@ module Sparrow::Handler
   end
   private def rows_to_pages(rows)
     page = rows/20
-    page += 1 if page%20 != 0
+    page += 1 if rows%20 != 0
     page = 1 if page == 0
     page
   end
