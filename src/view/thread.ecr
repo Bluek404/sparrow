@@ -2,14 +2,19 @@
   <p><textarea rows="3" cols="20" name="content"></textarea></p>
   <input type="submit" value="回复" />
 </form>
-<p>作者: <%= @thread[0] %> 时间: <%= @thread[4] %><% if @thread[3] %><a> SAGE </a><% end %></p>
-<% if @is_admin %><p><a href="">SAGE</a> <a href="">DEL</a></p><% end %>
+<p>
+  作者: <%= @thread[0] %> 时间: <%= @thread[4] %>
+  <% if @thread[3] %><a> SAGE </a><% end %>
+  <% if @is_admin %><a href="">SAGE</a> <a href="">DEL</a><% end %>
+</p>
 <p><%= @thread[1] %></p>
 <% @replies.each do |r| %>
   <% id, author, content, time = r[0], r[1], r[2], r[3] %>
-  <div style="border-style: solid; border-width: thick;">
-    <p>ID: <%= id %> 作者: <%= author %> 时间: <%= time %></p>
-    <% if @is_admin %><p><a href="">DEL</a></p><% end %>
+  <div class="mdl-card mdl-cell mdl-shadow--2dp sp-thread">
+    <p>
+      ID: <%= id %> 作者: <%= author %> 时间: <%= time %>
+      <% if @is_admin %><a href="">DEL</a><% end %>
+    </p>
     <p><%= content %></p>
   </div>
 <% end %>

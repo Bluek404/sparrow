@@ -6,7 +6,7 @@
 <% @data.each do |d| %>
   <% thread, reply = d[0], d[1] %>
   <% id, author, content, sage, time = thread[0], thread[1], thread[2], thread[3], thread[4] %>
-  <div style="border-style: solid; border-width: thick;">
+  <div class="mdl-card mdl-cell mdl-shadow--2dp sp-thread">
     <p>
       <a href="/t/<%= id %>">作者: <%= author %> 时间: <%= time %> <%= content %></a>
       <% if sage %><a> SAGE </a><% end %>

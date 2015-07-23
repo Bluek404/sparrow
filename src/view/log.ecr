@@ -1,6 +1,6 @@
 <% @reports.each do |r| %>
   <% author, target, reason, close, time = r[0], r[1], r[2], r[3], r[4] %>
-  <div style="border-style: solid; border-width: thick;">
+  <div class="mdl-card mdl-cell mdl-shadow--2dp sp-thread">
     <p>报告者: <%= author %> 时间: <%= time %> 对象: <%= target %></p>
     <% if close %>
       <p>CLOSED</p>
@@ -12,7 +12,7 @@
 <% end %>
 <% @logs.each do |l| %>
   <% handler, target, reason, operation, time = l[0], l[1], l[2], l[3], l[4] %>
-  <div style="border-style: solid; border-width: thick;">
+  <div class="mdl-card mdl-cell mdl-shadow--2dp sp-thread">
     <p>处理者: <%= handler %> 时间: <%= time %> 对象: <%= target %></p>
     <p>处理方法: <%= operation %></p>
     <p><%= reason %></p>
