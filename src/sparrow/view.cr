@@ -16,27 +16,66 @@ module Sparrow::View
     begin_page..end_page
   end
   ViewFileDir = "./src/view/"
-  class Home
-    def initialize(@categories)
+  class Farme
+    def initialize(@title, @body)
+      @categories = DB.exec({String, String} ,"SELECT id, name FROM categories").rows
     end
-    ecr_file(ViewFileDir + "home.ecr")
+    ecr_file(ViewFileDir + "farme.ecr")
+  end
+  class Home
+    class Body
+      def initialize()
+      end
+      ecr_file(ViewFileDir + "home.ecr")
+    end
+    def initialize()
+      @body = Body.new()
+    end
+    def to_s()
+      Farme.new("匿名版", @body).to_s
+    end
   end
   class Category
-    def initialize(@category_id, @category, @data, @page, @last_page, @is_admin)
-      @pagination = View.gen_pagination(@page, @last_page)
+    class Body
+      def initialize(@category_id, @category, @data, @page, @last_page, @is_admin)
+        @pagination = View.gen_pagination(@page, @last_page)
+      end
+      ecr_file(ViewFileDir + "category.ecr")
     end
-    ecr_file(ViewFileDir + "category.ecr")
+    def initialize(category_id, category, data, page, last_page, is_admin)
+      @category_name = category[2]
+      @body = Body.new(category_id, category, data, page, last_page, is_admin)
+    end
+    def to_s()
+      Farme.new(@category_name, @body).to_s
+    end
   end
   class Thread
-    def initialize(@category_name, @thread_id, @thread, @replies, @page, @last_page, @is_admin)
-      @pagination = View.gen_pagination(@page, @last_page)
+    class Body
+      def initialize(@category_name, @thread_id, @thread, @replies, @page, @last_page, @is_admin)
+        @pagination = View.gen_pagination(@page, @last_page)
+      end
+      ecr_file(ViewFileDir + "thread.ecr")
     end
-    ecr_file(ViewFileDir + "thread.ecr")
+    def initialize(@category_name, @thread_id, thread, replies, page, last_page, is_admin)
+      @body = Body.new(@category_name, @thread_id, thread, replies, page, last_page, is_admin)
+    end
+    def to_s()
+      Farme.new("No.#{ @thread_id } —— #{ @category_name }", @body).to_s
+    end
   end
   class Log
-    def initialize(@category_id, @category_name, @reports, @logs, @page, @last_page, @is_admin)
-      @pagination = View.gen_pagination(@page, @last_page)
+    class Body
+      def initialize(@category_id, @category_name, @reports, @logs, @page, @last_page, @is_admin)
+        @pagination = View.gen_pagination(@page, @last_page)
+      end
+      ecr_file(ViewFileDir + "log.ecr")
     end
-    ecr_file(ViewFileDir + "log.ecr")
+    def initialize(category_id, @category_name, reports, logs, page, last_page, is_admin)
+      @body = Body.new(category_id, @category_name, reports, logs, page, last_page, is_admin)
+    end
+    def to_s()
+      Farme.new("#{ @category_name } 管理记录", @body).to_s
+    end
   end
 end

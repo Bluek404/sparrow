@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= @title %></title>
+    <link rel="stylesheet" href="/css/material.min.css">
+    <script src="/js/material.min.js"></script>
+  </head>
+  <body>
+    <div class="mdl-layout mdl-js-layout mdl-layout--fixed-drawer
+      mdl-layout--overlay-drawer-button">
+      <div class="mdl-layout__drawer">
+        <span class="mdl-layout-title">匿名版</span>
+        <nav class="mdl-navigation">
+          <% @categories.each do |category| %>
+            <a class="mdl-navigation__link" href="<%= category[0] %>"><%= category[1] %></a>
+          <% end %>
+        </nav>
+      </div>
+      <main class="mdl-layout__content">
+        <div class="page-content">
+          <%= @body.to_s %>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

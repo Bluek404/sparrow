@@ -1,40 +1,32 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title><%= @category[0] %></title>
-  </head>
-  <body>
-    <a><%= @category[2] %></a>
-    <form action="<%= @category_id %>/new" method="post">
-      <p><textarea rows="3" cols="20" name="content"></textarea></p>
-      <input type="submit" value="发布" />
-    </form>
-    <% @data.each do |d| %>
-      <% thread, reply = d[0], d[1] %>
-      <% id, author, content, sage, time = thread[0], thread[1], thread[2], thread[3], thread[4] %>
-      <div style="border-style: solid; border-width: thick;">
+<a><%= @category[2] %></a>
+<form action="<%= @category_id %>/new" method="post">
+  <p><textarea rows="3" cols="20" name="content"></textarea></p>
+  <input type="submit" value="发布" />
+</form>
+<% @data.each do |d| %>
+  <% thread, reply = d[0], d[1] %>
+  <% id, author, content, sage, time = thread[0], thread[1], thread[2], thread[3], thread[4] %>
+  <div style="border-style: solid; border-width: thick;">
+    <p>
+      <a href="/t/<%= id %>">作者: <%= author %> 时间: <%= time %> <%= content %></a>
+      <% if sage %><a> SAGE </a><% end %>
+    </p>
+    <% if @is_admin %><p><a href="">SAGE</a> <a href="">DEL</a></p><% end %>
+    <% if reply.length > 0 %>
+      <p>回复:</p>
+      <% if d[2] > 5 %>
+        <p>隐藏了 <%= d[2]-5 %> 篇回复</p>
+      <% end %>
+      <% reply.each do |r| %>
+        <% r_id, r_author, r_content, r_time = r[0], r[1], r[2], r[3] %>
         <p>
-          <a href="/t/<%= id %>">作者: <%= author %> 时间: <%= time %> <%= content %></a>
-          <% if sage %><a> SAGE </a><% end %>
+          <a href="/t/<%= r_id %>">作者: <%= r_author %> 时间: <%= r_time %> <%= r_content %></a>
         </p>
-        <% if @is_admin %><p><a href="">SAGE</a> <a href="">DEL</a></p><% end %>
-        <% if reply.length > 0 %>
-          <p>回复:</p>
-          <% if d[2] > 5 %>
-            <p>隐藏了 <%= d[2]-5 %> 篇回复</p>
-          <% end %>
-          <% reply.each do |r| %>
-          <% r_id, r_author, r_content, r_time = r[0], r[1], r[2], r[3] %>
-            <p>
-              <a href="/t/<%= r_id %>">作者: <%= r_author %> 时间: <%= r_time %> <%= r_content %></a>
-            </p>
-            <% if @is_admin %><p><a href="">DEL</a></p><% end %>
-          <% end %>
-        <% end %>
-      </div>
+        <% if @is_admin %><p><a href="">DEL</a></p><% end %>
+      <% end %>
     <% end %>
-    <% @pagination.each do |p| %>
-    <a <% if p != @page %>href="<%= @category_id %>/<%= p %>"<% end %>><%= p %></a>
-    <% end %>
-  </body>
-</html>
+  </div>
+<% end %>
+<% @pagination.each do |p| %>
+  <a <% if p != @page %>href="<%= @category_id %>/<%= p %>"<% end %>><%= p %></a>
+<% end %>

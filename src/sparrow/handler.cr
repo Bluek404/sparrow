@@ -83,8 +83,7 @@ module Sparrow::Handler
     end
   end
   def home(request)
-    categories = DB.exec({String, String} ,"SELECT id, name FROM categories").rows
-    HTTP::Response.ok("text/html", View::Home.new(categories).to_s)
+    HTTP::Response.ok("text/html", View::Home.new().to_s)
   end
   def category(request, category_id, page)
     category = DB.exec({String, Array(JSON::Type), String},
