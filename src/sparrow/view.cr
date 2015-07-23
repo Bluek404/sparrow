@@ -72,8 +72,8 @@ module Sparrow::View
       end
       ecr_file(ViewFileDir + "log.ecr")
     end
-    def initialize(category_id, @category_name, reports, logs, page, last_page, is_admin)
-      @body = Body.new(category_id, @category_name, reports, logs, page, last_page, is_admin)
+    def initialize(@category_id, @category_name, reports, logs, page, last_page, is_admin)
+      @body = Body.new(@category_id, @category_name, reports, logs, page, last_page, is_admin)
     end
     def to_s()
       Farme.new("#{ @category_name } 管理记录", @category_id, @body).to_s

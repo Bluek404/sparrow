@@ -75,11 +75,11 @@ module Sparrow::Handler
     is_reply? = parent[0] != '/' ? true : false
 
     if is_reply?
-      DB.exec({String},
+      {DB.exec({String},
               "SELECT parent FROM threads WHERE id = $1::text LIMIT 1",
-              [parent]).rows[0][0]
+              [parent]).rows[0][0], true}
     else
-      parent
+      {parent, false}
     end
   end
   def home(request)
@@ -121,7 +121,6 @@ module Sparrow::Handler
     else
       is_admin? = false
     end
-    pp is_admin?
     HTTP::Response.ok("text/html",
                       View::Category.new(category_id, category, category_data, page, last_page, is_admin?).to_s)
   end
@@ -242,6 +241,7 @@ module Sparrow::Handler
                             [user_id]).rows[0][0]
       if last_thread != ""
         DB.exec("DELETE FROM threads WHERE id = $1::text", [last_thread])
+        DB.exec("DELETE FROM threads WHERE parent = $1::text", [last_thread])
         DB.exec("UPDATE users SET last_thread = '' WHERE id = $1::text", [user_id])
         HTTP::Response.ok("text/html", "OK")
       else
@@ -287,14 +287,20 @@ module Sparrow::Handler
       return HTTP::Response.new(403,
                                 HTTP::Response.default_status_message_for(403))
     end
-    category_id = get_category_id(thread_id)
-    unless category_id
+    result = get_category_id(thread_id)
+    unless result
       return HTTP::Response.not_found
     end
+    category_id, is_reply = result[0], result[1]
 
     if is_admin?(category_id, cookie[0])
       DB.exec("DELETE FROM threads WHERE id = $1::text",
               [thread_id])
+      unless is_reply
+        # 不是回复而是串，删掉此串的所有回复
+        DB.exec("DELETE FROM threads WHERE parent = $1::text",
+                [thread_id])
+      end
       DB.exec("INSERT INTO log VALUES ($1::text, $2::text, $3::text, $4::text, $5::text)",
              [cookie[0], thread_id, category_id, "DEL", reason])
       HTTP::Response.ok("text/html", "OK")
