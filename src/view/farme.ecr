@@ -3,22 +3,46 @@
   <head>
     <title><%= @title %></title>
     <link rel="stylesheet" href="/css/material.min.css">
+    <link rel="stylesheet" href="/css/style.css">
     <script src="/js/material.min.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
   </head>
   <body>
     <div class="mdl-layout mdl-js-layout mdl-layout--fixed-drawer
       mdl-layout--overlay-drawer-button">
-      <div class="mdl-layout__drawer">
+      <div class="mdl-layout__header mdl-layout__header-row">
+        <span class="mdl-layout-title"><%= @title %></span>
+      </div>
+      <div class="sp-drawer mdl-layout__drawer mdl-color--blue-grey-900
+        mdl-color-text--blue-grey-50">
         <span class="mdl-layout-title">匿名版</span>
-        <nav class="mdl-navigation">
+        <nav class="sp-navigation mdl-navigation mdl-color--blue-grey-800">
+          <a class="mdl-navigation__link" href="/">
+            <i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">home</i>
+            首页
+          </a>
           <% @categories.each do |category| %>
-            <a class="mdl-navigation__link" href="<%= category[0] %>"><%= category[1] %></a>
+          <a class="mdl-navigation__link" href="<%= category[0] %>">
+            <i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">forum</i>
+            <%= category[1] %>
+          </a>
           <% end %>
         </nav>
       </div>
       <main class="mdl-layout__content">
         <div class="page-content">
-          <%= @body.to_s %>
+          <div class="sp-content">
+            <%= @body.to_s %>
+          </div>
+          <footer class="mdl-mini-footer">
+            <div class="mdl-mini-footer--right-section">
+              <div class="mdl-logo">匿名版</div>
+              <ul class="mdl-mini-footer--link-list">
+                <li><a href="#">Help</a></li>
+                <li><a href="#">Privacy & Terms</a></li>
+              </ul>
+            </div>
+          </footer>
         </div>
       </main>
     </div>
