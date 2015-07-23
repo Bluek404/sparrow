@@ -17,7 +17,7 @@ module Sparrow::View
   end
   ViewFileDir = "./src/view/"
   class Farme
-    def initialize(@title, @body)
+    def initialize(@title, @category_id, @body)
       @categories = DB.exec({String, String} ,"SELECT id, name FROM categories").rows
     end
     ecr_file(ViewFileDir + "farme.ecr")
@@ -32,7 +32,7 @@ module Sparrow::View
       @body = Body.new()
     end
     def to_s()
-      Farme.new("匿名版", @body).to_s
+      Farme.new("匿名版", "", @body).to_s
     end
   end
   class Category
@@ -42,12 +42,12 @@ module Sparrow::View
       end
       ecr_file(ViewFileDir + "category.ecr")
     end
-    def initialize(category_id, category, data, page, last_page, is_admin)
+    def initialize(@category_id, category, data, page, last_page, is_admin)
       @category_name = category[0]
-      @body = Body.new(category_id, category, data, page, last_page, is_admin)
+      @body = Body.new(@category_id, category, data, page, last_page, is_admin)
     end
     def to_s()
-      Farme.new(@category_name, @body).to_s
+      Farme.new(@category_name, @category_id, @body).to_s
     end
   end
   class Thread
@@ -58,10 +58,11 @@ module Sparrow::View
       ecr_file(ViewFileDir + "thread.ecr")
     end
     def initialize(@category_name, @thread_id, thread, replies, page, last_page, is_admin)
+      @category_id = thread[2]
       @body = Body.new(@category_name, @thread_id, thread, replies, page, last_page, is_admin)
     end
     def to_s()
-      Farme.new("No.#{ @thread_id } —— #{ @category_name }", @body).to_s
+      Farme.new("No.#{ @thread_id } —— #{ @category_name }", @category_id, @body).to_s
     end
   end
   class Log
@@ -75,7 +76,7 @@ module Sparrow::View
       @body = Body.new(category_id, @category_name, reports, logs, page, last_page, is_admin)
     end
     def to_s()
-      Farme.new("#{ @category_name } 管理记录", @body).to_s
+      Farme.new("#{ @category_name } 管理记录", @category_id, @body).to_s
     end
   end
 end

@@ -17,12 +17,13 @@
         mdl-color-text--blue-grey-50">
         <span class="mdl-layout-title">匿名版</span>
         <nav class="sp-navigation mdl-navigation mdl-color--blue-grey-800">
-          <a class="mdl-navigation__link" href="/">
+          <a class="mdl-navigation__link<% if @category_id == "" %> active<% end %>" href="/">
             <i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">home</i>
             首页
           </a>
           <% @categories.each do |category| %>
-          <a class="mdl-navigation__link" href="<%= category[0] %>">
+          <a class="mdl-navigation__link
+            <% if @category_id == category[0] %> active<% end %>" href="<%= category[0] %>">
             <i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">forum</i>
             <%= category[1] %>
           </a>
