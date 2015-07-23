@@ -43,7 +43,7 @@ module Sparrow::View
       ecr_file(ViewFileDir + "category.ecr")
     end
     def initialize(category_id, category, data, page, last_page, is_admin)
-      @category_name = category[2]
+      @category_name = category[0]
       @body = Body.new(category_id, category, data, page, last_page, is_admin)
     end
     def to_s()
