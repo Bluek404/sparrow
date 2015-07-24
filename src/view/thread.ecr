@@ -4,15 +4,17 @@
 </form>
 <p>
   作者: <%= @thread[0] %> 时间: <%= @thread[4] %>
+  <a href="">R</a>
   <% if @thread[3] %><a> SAGE </a><% end %>
   <% if @is_admin %><a href="">SAGE</a> <a href="">DEL</a><% end %>
 </p>
 <p><%= @thread[1] %></p>
 <% @replies.each do |r| %>
   <% id, author, content, time = r[0], r[1], r[2], r[3] %>
-  <div class="mdl-card mdl-cell mdl-shadow--2dp sp-thread">
+  <div class="mdl-card mdl-cell mdl-shadow--2dp sp-reply">
     <p>
-      ID: <%= id %> 作者: <%= author %> 时间: <%= time %>
+      <a href="#<%= id %>">ID: <%= id %></a> 作者: <%= author %> 时间: <%= time %>
+      <a href="">R</a>
       <% if @is_admin %><a href="">DEL</a><% end %>
     </p>
     <p><%= content %></p>
