@@ -397,7 +397,7 @@ module Sparrow::Handler
     end
     thread = thread[0]
     HTTP::Response.ok("application/json", %({"author":"#{ thread[0] }",) +
-                                          %("content":"#{ thread[1] },) +
+                                          %("content":"#{ thread[1] }",) +
                                           %("time":"#{ thread[2]}"}))
   end
 end
