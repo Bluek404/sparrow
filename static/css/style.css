@@ -78,7 +78,7 @@
 
 @media screen and (max-width: 850px) {
     .sp-thread {
-        width: initial;
+        display: block;
     }
 }
 
