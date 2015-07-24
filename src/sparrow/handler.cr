@@ -385,4 +385,19 @@ module Sparrow::Handler
                          HTTP::Response.default_status_message_for(403))
     end
   end
+  def preview(request, id)
+    pp id
+    thread = DB.exec({String, String, Time},
+                      "SELECT author, content, time FROM threads
+                       WHERE id = $1::text
+                       ORDER BY modified DESC LIMIT 1",
+                      [id]).rows
+    if thread.length == 0
+      return HTTP::Response.not_found
+    end
+    thread = thread[0]
+    HTTP::Response.ok("application/json", %({"author":"#{ thread[0] }",) +
+                                          %("content":"#{ thread[1] },) +
+                                          %("time":"#{ thread[2]}"}))
+  end
 end

@@ -11,7 +11,7 @@
 <p><%= @thread[1] %></p>
 <% @replies.each do |r| %>
   <% id, author, content, time = r[0], r[1], r[2], r[3] %>
-  <div class="mdl-card mdl-cell mdl-shadow--2dp sp-reply">
+  <div id="<%= id %>" class="mdl-card mdl-cell mdl-shadow--2dp sp-reply">
     <p>
       <a href="#<%= id %>">No.<%= id %></a>
       作者: <%= author %> 时间: <%= time %>
