@@ -8,7 +8,8 @@
   <% id, author, content, sage, time = thread[0], thread[1], thread[2], thread[3], thread[4] %>
   <div class="mdl-card mdl-cell mdl-shadow--2dp sp-thread">
     <p>
-      <a href="/t/<%= id %>">作者: <%= author %> 时间: <%= time %></a>
+      <a href="/t/<%= id %>">No.<%= id %></a>
+      作者: <%= author %> 时间: <%= time %>
       <% if sage %><a class="sage mdl-shadow--2dp"> SAGE </a><% else %><a href="">R</a><% end %>
       <% if @is_admin %>
           <% unless sage %><a href="">SAGE</a><% end %>
@@ -24,7 +25,8 @@
       <% reply.each do |r| %>
         <% r_id, r_author, r_content, r_time = r[0], r[1], r[2], r[3] %>
         <p>
-          <a href="/t/<%= r_id %>">作者: <%= r_author %> 时间: <%= r_time %></a>
+          <a href="/t/<%= r_id %>">No.<%= r_id %></a>
+          作者: <%= r_author %> 时间: <%= r_time %>
           <a href="">R</a>
           <% if @is_admin %><a href="">DEL</a><% end %>
         </p>
