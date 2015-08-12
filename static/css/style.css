@@ -45,7 +45,14 @@
 }
 
 .sp-content {
-  margin: 20px;
+  min-height: 100vh;
+  margin-bottom: -100px;
+}
+
+.sp-content > div {
+  margin-bottom: 100px;
+  padding: 20px;
+  display: inline-block;
 }
 
 .mdl-layout__content {
